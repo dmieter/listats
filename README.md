@@ -10,13 +10,13 @@ just run: python3 listats-api.py
 
 
 ## Implemented Endpoints:
-/tournaments
-/tournaments/<tournamentId>
-/tournaments/performance
-/team/points
-/team/games
-/player/<playerName>/performance
-/player/<playerName>/averageScore
+-/tournaments
+-/tournaments/<tournamentId>
+-/tournaments/performance
+-/team/points
+-/team/games
+-/player/<playerName>/performance
+-/player/<playerName>/averageScore
 
 All endpoints above accept the following optional urlencoded parameters:
 - type - type of tournaments, for example 'Bundesliga'
