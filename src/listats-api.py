@@ -280,4 +280,4 @@ def playerAverageScore(playerName):
 #http://127.0.0.1:4567/tournaments?type=Dark+Master&size=5
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=4567)
+    app.run(host='127.0.0.1', port=5001)
