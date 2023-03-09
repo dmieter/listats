@@ -9,8 +9,10 @@ from datetime import timedelta, date
 
 # %% GLOBALS
 
-dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
-dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+#dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
+#dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
+dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
 
 def loadPlayersDataframe():
     return pd.read_pickle(dfPlayersFileName)
@@ -61,7 +63,7 @@ def removeTitlesInfo(p):
        'NM_l', 'NM_w', 'WCM_d', 'WCM_l', 'WCM_w', 'WFM_d', 'WFM_l', 'WFM_w',
        'WGM_d', 'WGM_l', 'WGM_w', 'WIM_d', 'WIM_l', 'WIM_w'])
 
-def getFilteredPlayers(ttype, tsubtype, periodDays, titles=False):
+def getFilteredPlayers(ttype, tsubtype, periodDays, titles=True):
     t = getFilteredTournaments(ttype, tsubtype, periodDays)
     p = getCorrespondingPlayers(t)
     if(titles):
