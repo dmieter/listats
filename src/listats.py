@@ -14,8 +14,12 @@ from datetime import timedelta, date
 # %% GLOBALS
 
 TORPEDO_TEAM_ID = 'xaj9uK9X'
-dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
-dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+ECOSYSTEM_TEAM_ID = 'ChfzrMPn'
+#dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
+#dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
+dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
+
 pointsMap = {True : np.array([1, 0 ,0]), False : np.array([0 , 0, 1]), None : np.array([0, 1, 0])}
 
 
@@ -34,8 +38,8 @@ def saveTournamentsDataFrame():
     global DF_TOURNAMENTS
     DF_TOURNAMENTS.to_pickle(dfTournamentsFileName)  
 
-DF_TOURNAMENTS = loadTournamentsDataframe()
-DF_PLAYERS = loadPlayersDataframe()
+#DF_TOURNAMENTS = loadTournamentsDataframe()
+#DF_PLAYERS = loadPlayersDataframe()
 
 # %% NULLIFY
 
@@ -99,8 +103,9 @@ def titlesToString(titleGames):
   
 
 # To get all tournaments into a file
-#https://lichess.org/api/team/xaj9uK9X/arena?max=10000
-# + add [<contanets>] + "," at the end of lines
+#https://lichess.org/api/team/xaj9uK9X/arena?max=10000  (TORPEDO)
+#https://lichess.org/api/team/ChfzrMPn/arena?max=10000  (ECOSYSTEM)
+# + add square brackets around all lines + "," at the end of each lines (make all lines as entries in array)
 def loaAlldTournamentsList(filename):
     file = open(filename)
     data_json = json.loads(file.read())
@@ -112,6 +117,7 @@ def loaAlldTournamentsList(filename):
     return tournamentsList;    
 
 #print(loaAlldTournamentsList('all_tournaments_18102022'))
+print(loaAlldTournamentsList('ecosystem_all_tournaments_20230309'))
 #loadTournamentTeamResult('RIN0XImQ',TORPEDO_TEAM_ID)  
 
     
@@ -265,5 +271,5 @@ def loadTournamentsFromFile(filename, teamId):
     #loadTournamentFull('09bkHFZf', 'Марафон стенка на стенку', None, TORPEDO_TEAM_ID)
 #loadTournamentFull('JezGNM5V', 'Battle dark master', None, TORPEDO_TEAM_ID)
 #loadTournamentFull('9onmEUB1', None, None, TORPEDO_TEAM_ID)
-loadTournamentsFromFile('all_tournaments_18102022', TORPEDO_TEAM_ID)
+loadTournamentsFromFile('ecosystem_all_tournaments_20230309', ECOSYSTEM_TEAM_ID)
     
