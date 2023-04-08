@@ -36,6 +36,8 @@ def retrieveType(tName):
         return 'МАРАФОН Стенка'
     elif('FGMClub Mega'.lower() in tName.lower()):  
         return 'FGMClub Mega'
+    elif('Экосистема'.lower() in tName.lower() and 'Arena'.lower() in tName.lower()):  
+        return 'Экосистема Arena'
     else:
         np.nan 
 
@@ -61,9 +63,9 @@ def removeTitlesInfo(p):
     return p.drop(columns=['CM_d', 'CM_l', 'CM_w', 'FM_d', 'FM_l', 'FM_w', 'GM_d',
        'GM_l', 'GM_w', 'IM_d', 'IM_l', 'IM_w', 'LM_d', 'LM_l', 'LM_w', 'NM_d',
        'NM_l', 'NM_w', 'WCM_d', 'WCM_l', 'WCM_w', 'WFM_d', 'WFM_l', 'WFM_w',
-       'WGM_d', 'WGM_l', 'WGM_w', 'WIM_d', 'WIM_l', 'WIM_w'])
+       'WGM_d', 'WGM_l', 'WGM_w', 'WIM_d', 'WIM_l', 'WIM_w'], errors='ignore')
 
-def getFilteredPlayers(ttype, tsubtype, periodDays, titles=True):
+def getFilteredPlayers(ttype, tsubtype, periodDays, titles=False):
     t = getFilteredTournaments(ttype, tsubtype, periodDays)
     p = getCorrespondingPlayers(t)
     if(titles):

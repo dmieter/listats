@@ -6,6 +6,7 @@ import pandas as pd
 
 import json
 from bs4 import BeautifulSoup as bs
+import time
 
 from datetime import timedelta, date
 # Press ⌃R to execute it or replace it with your code.
@@ -19,6 +20,8 @@ ECOSYSTEM_TEAM_ID = 'ChfzrMPn'
 #dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
 dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
 dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
+#dfPlayersFileName = 'TEST.pkl'
+#dfTournamentsFileName = 'TEST.pkl'
 
 pointsMap = {True : np.array([1, 0 ,0]), False : np.array([0 , 0, 1]), None : np.array([0, 1, 0])}
 
@@ -43,8 +46,8 @@ def saveTournamentsDataFrame():
 
 # %% NULLIFY
 
-#DF_TOURNAMENTS = pd.DataFrame()
-#DF_PLAYERS = pd.DataFrame()
+DF_TOURNAMENTS = pd.DataFrame()
+DF_PLAYERS = pd.DataFrame()
 
 
 # %% API FUNCTIONS
@@ -56,6 +59,16 @@ def loadJson(url):
 
     data_json = json.loads(response)
     return data_json
+
+def loadJsonList(url):
+    req = Request(url)
+    req.add_header('x-requested-with', 'XMLHttpRequest')
+    response = urlopen(req).read().decode('utf-8')
+
+    list_json = []
+    for line in response.splitlines():
+        list_json.append(json.loads(line))
+    return list_json
 
 def loadTournamentJson(trId):
     data = loadJson('https://lichess.org/api/tournament/' + trId)
@@ -87,6 +100,10 @@ def loadTournamentTeamResult(trId, teamId):
 
 def loadTeamJson(trId, teamId):
     data = loadJson('https://lichess.org/tournament/' + trId + '/team/' + teamId)
+    return data
+
+def loadIndividualResultsJson(trId):
+    data = loadJsonList('https://lichess.org/api/tournament/' + trId + '/results')
     return data
 
 def loadPlayerJson(trId, playerId):
@@ -167,12 +184,18 @@ def getPlayerSummary(playerName, tournamentId):
     return playerSummary 
 
 
-def getTournamentPlayers(tournamentId, teamId):
-    teamRes = loadTeamJson(tournamentId, teamId)
+def getTournamentPlayers(tournamentId, teamId, isIndividual = False):
+
+    if not isIndividual:
+        players = loadTeamJson(tournamentId, teamId)['topPlayers']
+        playerNameField = 'name'
+    else:
+        players = loadIndividualResultsJson(tournamentId)
+        playerNameField = 'username'
     
     teamPlayersSummary = []
-    for player in teamRes['topPlayers']:
-        playerSummary = getPlayerSummary(player['name'], tournamentId)
+    for player in players:
+        playerSummary = getPlayerSummary(player[playerNameField], tournamentId)
         if len(playerSummary) > 0:
             teamPlayersSummary.append(playerSummary)
     
@@ -181,12 +204,18 @@ def getTournamentPlayers(tournamentId, teamId):
         return pd.DataFrame(teamPlayersSummary).set_index(['playerName', 'tournament'])
     else:
         return pd.DataFrame()
-        
 
 def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
     tournamentData = loadTournamentJson(tournamentId)
     
-    place, score = loadTournamentTeamResult(tournamentId, teamId)
+    try:
+        place, score = loadTournamentTeamResult(tournamentId, teamId)
+        isIndividual = False
+    except BaseException as exception:
+        print('Can\'t get team place and score for {}: {}, is it individual arena?'.format(tournamentId, type(exception).__name__)) 
+        place = 0
+        score = 0
+        isIndividual = True
     
     tournamentSummary = {'index': tournamentId,
                          'id': tournamentId, 
@@ -197,37 +226,34 @@ def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
                          'teamPlace': place,
                          'teamScore': score
                          }
-    return pd.DataFrame(tournamentSummary, index=[0]).set_index(['index'])
+    return pd.DataFrame(tournamentSummary, index=[0]).set_index(['index']), isIndividual
 
 
 def loadTournamentFull(tournamentId, tournamentType, tournamentSubtype, teamId):
-    try:
-        global DF_TOURNAMENTS
-        global DF_PLAYERS
-        
-        newDfTournament = getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId)
-        newDfPlayers = getTournamentPlayers(tournamentId, teamId)
-        
-        if newDfTournament.size > 0:
-            newDfTournament.date = pd.to_datetime(newDfTournament.date)
-            #print(newDfTournament.date)
-            
-            if DF_TOURNAMENTS.size > 0:
-                DF_TOURNAMENTS = newDfTournament.combine_first(DF_TOURNAMENTS)
-            else:
-                DF_TOURNAMENTS = newDfTournament
-        
-        if newDfPlayers.size > 0:
-            if DF_PLAYERS.size > 0:
-                DF_PLAYERS = newDfPlayers.combine_first(DF_PLAYERS)
-            else:
-                DF_PLAYERS = newDfPlayers
-                
-        savePlayersDataFrame()
-        saveTournamentsDataFrame()
     
-    except BaseException as exception:
-        print('Skip {} because of {}'.format(tournamentId, type(exception).__name__)) 
+    global DF_TOURNAMENTS
+    global DF_PLAYERS
+    
+    newDfTournament, isIndividual = getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId)
+    newDfPlayers = getTournamentPlayers(tournamentId, teamId, isIndividual)
+    
+    if newDfTournament.size > 0:
+        newDfTournament.date = pd.to_datetime(newDfTournament.date)
+        #print(newDfTournament.date)
+        
+        if DF_TOURNAMENTS.size > 0:
+            DF_TOURNAMENTS = newDfTournament.combine_first(DF_TOURNAMENTS)
+        else:
+            DF_TOURNAMENTS = newDfTournament
+    
+    if newDfPlayers.size > 0:
+        if DF_PLAYERS.size > 0:
+            DF_PLAYERS = newDfPlayers.combine_first(DF_PLAYERS)
+        else:
+            DF_PLAYERS = newDfPlayers
+            
+    savePlayersDataFrame()
+    saveTournamentsDataFrame()
 
 
 def loadTournamentsFromFile(filename, teamId):
@@ -237,8 +263,13 @@ def loadTournamentsFromFile(filename, teamId):
         tournamentsNumber = len(tournamentsList)
         for tournamentId in tournamentsList:
             print('Loading {} ({} from {})'.format(tournamentId, tournamentNumber, tournamentsNumber))
-            loadTournamentFull(tournamentId, None, None, teamId)
+            try:
+                loadTournamentFull(tournamentId, None, None, teamId)
+            except BaseException as exception:
+                  print('RETRY Loading {} ({} from {})'.format(tournamentId, tournamentNumber, tournamentsNumber))
+                  loadTournamentFull(tournamentId, None, None, teamId)  
             tournamentNumber += 1
+            time.sleep(1)
 
 
 
@@ -271,5 +302,8 @@ def loadTournamentsFromFile(filename, teamId):
     #loadTournamentFull('09bkHFZf', 'Марафон стенка на стенку', None, TORPEDO_TEAM_ID)
 #loadTournamentFull('JezGNM5V', 'Battle dark master', None, TORPEDO_TEAM_ID)
 #loadTournamentFull('9onmEUB1', None, None, TORPEDO_TEAM_ID)
+#loadTournamentFull('dJh4vViJ', None, None, TORPEDO_TEAM_ID)
+
+
 loadTournamentsFromFile('ecosystem_all_tournaments_20230309', ECOSYSTEM_TEAM_ID)
     
