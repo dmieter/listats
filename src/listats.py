@@ -16,12 +16,12 @@ from datetime import timedelta, date
 
 TORPEDO_TEAM_ID = 'xaj9uK9X'
 ECOSYSTEM_TEAM_ID = 'ChfzrMPn'
-#dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
-#dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
-dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
-dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
-#dfPlayersFileName = 'TEST.pkl'
-#dfTournamentsFileName = 'TEST.pkl'
+TEAM_ID = TORPEDO_TEAM_ID
+dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
+dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+#dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
+#dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
+
 
 pointsMap = {True : np.array([1, 0 ,0]), False : np.array([0 , 0, 1]), None : np.array([0, 1, 0])}
 
@@ -50,6 +50,7 @@ DF_TOURNAMENTS = pd.DataFrame()
 DF_PLAYERS = pd.DataFrame()
 
 
+
 # %% API FUNCTIONS
 
 def loadJson(url):
@@ -75,34 +76,43 @@ def loadTournamentJson(trId):
     return data
 
 def loadTournamentTeamResult(trId, teamId):
-    req = Request('https://lichess.org/tournament/'+trId+'/teams')
-    response = urlopen(req).read()
+    try:
+        req = Request('https://lichess.org/tournament/'+trId+'/teams')
+        response = urlopen(req).read()
     
-    place = 9999
-    score = 0
+        place = 9999
+        score = 0
+        isIndividual = False
     
-    soup = bs(response, features='html.parser')
-    for row in soup.find_all('tr'):
-        #href = row.find('a', href='/tournament/'+trId+'/team/'+teamId)
-        href = row.select('a[href*='+teamId+']') # select href containing team id
-        if href:
-            tdPlace = row.find('td', {'class': 'rank'})
-            if tdPlace:
-                place = tdPlace.text
-                
-            tdScore = row.find('td', {'class': 'total'})
-            if tdScore:
-                score = tdScore.text
-                
-            break # stop searching
-        
-    return place, score
+        soup = bs(response, features='html.parser')
+        for row in soup.find_all('tr'):
+            #href = row.find('a', href='/tournament/'+trId+'/team/'+teamId)
+            href = row.select('a[href*='+teamId+']') # select href containing team id
+            if href:
+                tdPlace = row.find('td', {'class': 'rank'})
+                if tdPlace:
+                    place = tdPlace.text
+                    
+                tdScore = row.find('td', {'class': 'total'})
+                if tdScore:
+                    score = tdScore.text
+                    
+                break # stop searching
 
+    except BaseException as exception:
+        print('Can\'t get team place and score for {}: {}, is it individual arena?'.format(trId, type(exception).__name__)) 
+        place = 0
+        score = 0
+        isIndividual = True    
+        
+    return place, score, isIndividual
+
+#deprecated
 def loadTeamJson(trId, teamId):
     data = loadJson('https://lichess.org/tournament/' + trId + '/team/' + teamId)
     return data
 
-def loadIndividualResultsJson(trId):
+def loadTournamentPlayers(trId):
     data = loadJsonList('https://lichess.org/api/tournament/' + trId + '/results')
     return data
 
@@ -118,7 +128,7 @@ def titlesToString(titleGames):
     
     return titlesStr
   
-
+#DEPRECATED
 # To get all tournaments into a file
 #https://lichess.org/api/team/xaj9uK9X/arena?max=10000  (TORPEDO)
 #https://lichess.org/api/team/ChfzrMPn/arena?max=10000  (ECOSYSTEM)
@@ -134,7 +144,7 @@ def loaAlldTournamentsList(filename):
     return tournamentsList;    
 
 #print(loaAlldTournamentsList('all_tournaments_18102022'))
-print(loaAlldTournamentsList('ecosystem_all_tournaments_20230309'))
+#print(loaAlldTournamentsList('ecosystem_all_tournaments_20230309'))
 #loadTournamentTeamResult('RIN0XImQ',TORPEDO_TEAM_ID)  
 
     
@@ -186,18 +196,14 @@ def getPlayerSummary(playerName, tournamentId):
 
 def getTournamentPlayers(tournamentId, teamId, isIndividual = False):
 
-    if not isIndividual:
-        players = loadTeamJson(tournamentId, teamId)['topPlayers']
-        playerNameField = 'name'
-    else:
-        players = loadIndividualResultsJson(tournamentId)
-        playerNameField = 'username'
+    players = loadTournamentPlayers(tournamentId)
     
     teamPlayersSummary = []
     for player in players:
-        playerSummary = getPlayerSummary(player[playerNameField], tournamentId)
-        if len(playerSummary) > 0:
-            teamPlayersSummary.append(playerSummary)
+        if((isIndividual and 'team' not in player) or player['team'] == teamId):
+            playerSummary = getPlayerSummary(player['username'], tournamentId)
+            if len(playerSummary) > 0:
+                teamPlayersSummary.append(playerSummary)
     
     
     if len(teamPlayersSummary) > 0:
@@ -208,14 +214,7 @@ def getTournamentPlayers(tournamentId, teamId, isIndividual = False):
 def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
     tournamentData = loadTournamentJson(tournamentId)
     
-    try:
-        place, score = loadTournamentTeamResult(tournamentId, teamId)
-        isIndividual = False
-    except BaseException as exception:
-        print('Can\'t get team place and score for {}: {}, is it individual arena?'.format(tournamentId, type(exception).__name__)) 
-        place = 0
-        score = 0
-        isIndividual = True
+    place, score, isIndividual = loadTournamentTeamResult(tournamentId, teamId)
     
     tournamentSummary = {'index': tournamentId,
                          'id': tournamentId, 
@@ -229,13 +228,14 @@ def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
     return pd.DataFrame(tournamentSummary, index=[0]).set_index(['index']), isIndividual
 
 
-def loadTournamentFull(tournamentId, tournamentType, tournamentSubtype, teamId):
+def loadTournamentFull(tournamentId, tournamentType, tournamentSubtype):
     
     global DF_TOURNAMENTS
     global DF_PLAYERS
+    global TEAM_ID
     
-    newDfTournament, isIndividual = getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId)
-    newDfPlayers = getTournamentPlayers(tournamentId, teamId, isIndividual)
+    newDfTournament, isIndividual = getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, TEAM_ID)
+    newDfPlayers = getTournamentPlayers(tournamentId, TEAM_ID, isIndividual)
     
     if newDfTournament.size > 0:
         newDfTournament.date = pd.to_datetime(newDfTournament.date)
@@ -255,55 +255,56 @@ def loadTournamentFull(tournamentId, tournamentType, tournamentSubtype, teamId):
     savePlayersDataFrame()
     saveTournamentsDataFrame()
 
+def loadTeamTournaments(data_json):        
+        
+        tournamentsList = []
+        for tournamentJson in data_json:
+            tournamentsList.append(tournamentJson['id'])
 
-def loadTournamentsFromFile(filename, teamId):
-        #tournamentsList = loaAlldTournamentsList('all_tournaments_18102022')
-        tournamentsList = loaAlldTournamentsList(filename)
         tournamentNumber = 1
         tournamentsNumber = len(tournamentsList)
         for tournamentId in tournamentsList:
             print('Loading {} ({} from {})'.format(tournamentId, tournamentNumber, tournamentsNumber))
             try:
-                loadTournamentFull(tournamentId, None, None, teamId)
+                loadTournamentFull(tournamentId, None, None)
             except BaseException as exception:
-                  print('RETRY Loading {} ({} from {})'.format(tournamentId, tournamentNumber, tournamentsNumber))
-                  loadTournamentFull(tournamentId, None, None, teamId)  
+                try:
+                    print('RETRY Loading {} ({} from {})'.format(tournamentId, tournamentNumber, tournamentsNumber))
+                    loadTournamentFull(tournamentId, None, None) 
+                except BaseException as exception:
+                    print('FAILED to load {}. Consider manual upload.'.format(tournamentId, tournamentNumber, tournamentsNumber))
+
             tournamentNumber += 1
-            time.sleep(1)
+            time.sleep(0.5)
+
+
+def loadTeamTournamentsFromFile(filename):
+    file = open(filename)
+    list_json = []
+    for line in file.readlines():
+        list_json.append(json.loads(line))
+    
+    loadTeamTournaments(list_json)
+
+def loadTeamTournamentsFromUrl(number):
+    #https://lichess.org/api/team/xaj9uK9X/arena?max=10000
+    data_json = loadJsonList('https://lichess.org/api/team/{}/arena?max={}'.format(TEAM_ID, number))
+    loadTeamTournaments(data_json)
+
 
 
 
 # %% UPLOAD    
     
-    #loadTournamentFull('LMoZn2da', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('Z6rQpTr3', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('mM39GlTh', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('hncSAdC3', 'Bundesliga', 'Div1', TORPEDO_TEAM_ID)
-    #loadTournamentFull('m9CjPqg6', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('R403flz4', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('Mhl4xoAR', 'Elite SuperBlitz', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('EVtQ1tTq', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('JLEwt0oP', 'Марафон стенка на стенку', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('KejO4m5E', 'Bundesliga', 'Div1', TORPEDO_TEAM_ID)
-    #loadTournamentFull('HsqaiEAx', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('cvfOUqlw', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('tPJxb1I1', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('Rmlt1X58', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('XvuDGTzJ', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('az21hHWo', '16ava Marathon', 'Liga A', TORPEDO_TEAM_ID)
-    #loadTournamentFull('RIN0XImQ', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('VBFHR361', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('Co4LEYNq', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('Vjf8FsxA', 'Bundesliga', 'Div2', TORPEDO_TEAM_ID)
-    #loadTournamentFull('ArTokuAj', 'Final DARK MASTER', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('4HwiQG5T', 'FGMClub Mega', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('GVrqtEkh', 'Elite SuperBlitz', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('F1Oo2gnd', 'Battle dark master', None, TORPEDO_TEAM_ID)
-    #loadTournamentFull('09bkHFZf', 'Марафон стенка на стенку', None, TORPEDO_TEAM_ID)
-#loadTournamentFull('JezGNM5V', 'Battle dark master', None, TORPEDO_TEAM_ID)
-#loadTournamentFull('9onmEUB1', None, None, TORPEDO_TEAM_ID)
-#loadTournamentFull('dJh4vViJ', None, None, TORPEDO_TEAM_ID)
 
 
-loadTournamentsFromFile('ecosystem_all_tournaments_20230309', ECOSYSTEM_TEAM_ID)
+#loadTeamTournamentsFromUrl(10000)
+loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
+
+#DEBUG
+#loadTournamentFull('OxhpZ8kX', None, None) #removed?
+#loadTournamentFull('Nrhgv49W', None, None)
+#loadTournamentFull('TnUnNHLe', None, None)
+
+
     
