@@ -240,6 +240,8 @@ def getPodiumsSimple(ttype, tsubtype, periodDays):
 
     return g
 
+def getRandomTournament():
+    return DF_TOURNAMENTS.sample().id.iloc[0]
 
 def loadTournamentInfoDict(id):
     t = DF_TOURNAMENTS[DF_TOURNAMENTS.id == id].iloc[0]

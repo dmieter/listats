@@ -323,14 +323,15 @@ def getTournamentChart(type):
     if(type == 'Все'):
         type = 'Bundesliga'
 
-    t = ls.getFilteredTournaments(type, None, None).sort_values(by='date', ascending = False).head(200)
+    t = ls.getFilteredTournaments(type, None, None).sort_values(by='date', ascending = False).head(2000)
+    t = t[t.teamScore > 0]
     t.teamPlace = pd.to_numeric(t.teamPlace)
-
+    
     t['color'] = '#7d7d7d'
     t.loc[t.teamPlace == 1, 'color'] = '#FFD700'
     t.loc[t.teamPlace == 2, 'color'] = '#D0D0FF'
     t.loc[t.teamPlace == 3, 'color'] = '#CD7F32'
-    if(type == 'Bundesliga'):
+    if(type == 'Bundesliga' or type == 'Rapid League'):
         t.loc[t.teamPlace >= 8, 'color'] = '#FF0000'
 
     t.rename(columns={'date': 'Дата', 
@@ -444,8 +445,8 @@ def getPlayerInfoPanel(name):
     return html_pane
 
 
-
 def getTournamentInfoPanel(id):
+
     info = ls.loadTournamentInfoDict(id)
 
     html_pane = pn.pane.HTML("""
@@ -483,7 +484,7 @@ def get_page_user():
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value='Все')
     select_indicator_widget = pn.widgets.Select(options=indicators,value='Перф')
     name_input_widget = pn.widgets.TextInput(name='Name Input', value='dmieter')
-    tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value='Eun61pAl')
+    tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
     
     player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget)
     tournament_html_pane = pn.bind(getTournamentInfoPanel, id=tournament_input_widget)
@@ -526,6 +527,6 @@ def get_page_user():
 
 
 
-pn.serve(get_page_user, port=5003)
+pn.serve(get_page_user, port=5003, websocket_origin = '*')
 
 # %%
