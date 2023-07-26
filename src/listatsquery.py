@@ -253,11 +253,25 @@ def loadTournamentInfoDict(id):
 
     return info   
 
-def getTournamentChart(type):
+def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
+    t = getFilteredPlayers(ttype, tsubtype, periodDays)
+    t = t[t.playerName == name]
+    info = {}
+    info["lastActive"] = t.date.max()
+    info["maxPerf"] = t[t.games >=5].performance.max()
+    info["avPerf"] = t[t.games >=5].performance.mean()
+    info["maxAvScore"] = t[t.games >=10].avScore.max()
+    info["avScore"] = t.score.sum()/t.games.sum()
+    info["totalGames"] = t.games.sum()
+    info["totalPoints"] = t.score.sum()
+    info["berserk"] = t.berserk.sum()/t.games.sum()
+    prizes_df = t[t.place <= 3]
+    if not prizes_df.empty:
+        info["prizes"] = prizes_df
+    
+    #print(t.columns)
 
 
-    t = getFilteredTournaments(type, None, None).sort_values(by='date', ascending = False).head(100)
+    return info 
 
-    #print(t.head())
-
-getTournamentChart(None)
+print(loadPlayerInfoDict('dmieter', None, None, None))

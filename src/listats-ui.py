@@ -27,7 +27,8 @@ indicatorsOpt = {'Набранные очки':False, 'Темп':False, 'Игр�
 # %% STYLES
 
 box_style = {'background-color': '#FFFFFF','border-radius': '5px','padding': '10px','box-shadow': '5px 5px 5px #bcbcbc'}
-box_empty_style = {'padding': '15px'}
+box_empty_style = {'padding-top': '15px', 'padding-left': '15px'}
+box_empty_style_h = {'padding-left': '15px'}
 font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
@@ -39,7 +40,7 @@ img_third_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/l
 stylesheet_tabulator = """
 
 .tabulator {
-  padding: 10px;
+  padding: 15px;
   box-shadow: 5px 5px 15px #bcbcbc;
   border-radius: 5px;
 }
@@ -61,7 +62,7 @@ stylesheet_tabulator = """
 stylesheet_tabulator_small = """
 
 .tabulator {
-  padding: 10px;
+  padding: 5px;
 }
 
 .tabulator-cell {
@@ -175,6 +176,11 @@ def getIndicatorsTab(indicatorDisplay, type):
       'Темп': NumberFormatter(format='0.000')
     }
 
+    if indicatorDisplay == 'Перф':
+        df = df[df.games >= 5]
+    elif indicatorDisplay == 'Темп':
+        df = df[df.games >= 10]
+
     indicatorsTab = pn.widgets.Tabulator(
         df[['Игрок', indicatorDisplay, 'Дата']].head(100),
         layout='fit_data',
@@ -229,6 +235,7 @@ def getSingleTournamentTab(tournamentId):
                        'place': 'Место',
                        'games': 'Игры', 
                        'score': 'Очки',
+                       'performance': 'Перф',
                        'avBerserk': 'Берсерк'},
                             inplace = True)       
 
@@ -240,11 +247,11 @@ def getSingleTournamentTab(tournamentId):
     }
 
     return pn.widgets.Tabulator(
-        df[['Игрок', 'Место', 'Игры', 'Очки', 'Берсерк']],
+        df[['Игрок', 'Место', 'Игры', 'Очки', 'Перф', 'Берсерк']],
         layout='fit_data',
         show_index = False,
         disabled = True,
-        height = 360,
+        height = 300,
         stylesheets=[stylesheet_tabulator_small],
         formatters = tab_formatters
     )
@@ -315,6 +322,17 @@ class TabulatorSingleTournament:
     def click(self, event):
         self.player_name_widget.value = str(self.tabulator_object.value.iloc[event.row]["Игрок"])     
 
+def getPlayerPieChart(name):
+    import plotly.express as px
+    p = ls.getFilteredPlayers(None, None, None)
+    p = p[p['playerName'] == name]
+    g = p.groupby(['type'], 
+                    as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
+    
+    fig = px.pie(g, values='typeCount', names='type', title='Турниры')
+    plot = pn.pane.Plotly(fig, styles = box_empty_style)
+
+    return pn.Column(plot)
 
 def getTournamentChart(type):
     import plotly.express as px
@@ -347,9 +365,6 @@ def getTournamentChart(type):
                 color=t["color"],
                 size=10,
             ))
-
-    #fig = px.line(t, x="Дата", y="Место", title=type, text = "Турнир")
-    #fig.update_traces(mode="lines+markers", marker=dict(size=5), line=dict(width=2))
     
     yaxis_format = dict(autorange="reversed")
     if(t['Место'].max() <= 15):
@@ -379,22 +394,6 @@ def getTournamentChart(type):
 
 
 
-
-def getPageTitlePanel():
-    html_pane = pn.pane.HTML("""
-<h1>Торпедо Москва</h1>
-
-<table>
-  <tr>
-    <td><b>Количество Активных Игроков:</b></td>
-    <td>56</th>
-  </tr>
-</table>
-                             
-""", styles = box_style | font_style)  
-
-    return html_pane
-
 def getTitlePanel(title):
     return pn.pane.HTML('<h3>'+ title +'</h3>', align = 'center', styles = font_style)  
 
@@ -407,42 +406,6 @@ def getTitlePanelWithLogo(title):
   </tr>
 </table>
 """, styles = font_style)  
-
-
-def getPlayerInfoPanel(name):
-    html_pane = pn.pane.HTML("""
-<h2>""" + name + """</h2>
-
-<br>
-
-<table>
-  <tr>
-    <td>Игры:</td>
-    <td>1035</td>
-  </tr>
-  <tr>
-    <td>Победы:</td>
-    <td>673</td> 
-  </tr>
-</table>
-
-<table>
-  <tr>
-    <td></td>
-    <td>Средний</td>
-    <td>Максимальный</td>
-  </tr>
-  <tr>
-    <td>Перформанс:</td>
-    <td>2172</td>
-    <td>2673</td>
-  </tr>
-</table>
-
-""", style={'background-color': '#F6F6F6', 'border': '2px solid black',
-            'border-radius': '5px', 'padding': '10px'})  
-
-    return html_pane
 
 
 def getTournamentInfoPanel(id):
@@ -471,6 +434,56 @@ def getTournamentInfoPanel(id):
 
 """, styles = font_style)
 
+    return html_pane   
+
+
+def getPlayerInfoPanel(name, type):
+
+    if(type == 'Все'):
+        type = None
+
+    info = ls.loadPlayerInfoDict(name, type, None, None)
+    print(info)
+
+    html_pane = pn.pane.HTML("""
+<h2><a href='https://lichess.org/@/""" + name + """'>""" + name + """</a></h2>
+Активен: """ + str(info["lastActive"])[:-15]  + """
+<br>
+
+<table>
+      <td></td>
+      <td>Avg</td>
+      <td>Max</td>
+    </tr>
+    <tr>
+      <td>Перф:</td>
+      <td>""" + str(info["avPerf"]) + """</td>
+      <td>""" + str(info["maxPerf"]) + """</td>
+    </tr>
+    <tr>
+      <td>Темп:</td>
+      <td>""" + str(info["avScore"]) + """</td>
+      <td>""" + str(info["maxAvScore"]) + """</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+      <td>Игр:</td>
+      <td>""" + str(info["totalGames"]) + """</td>
+    </tr>
+    <tr>
+      <td>Очков набрано:</td>
+      <td>""" + str(info["totalPoints"]) + """</td>
+    </tr>
+    <tr>
+      <td>Берсерк:</td>
+      <td>""" + str(info["berserk"]) + """</td>
+    </tr>
+</table>
+
+""", styles = font_style)
+
     return html_pane    
 
 
@@ -486,7 +499,7 @@ def get_page_user():
     name_input_widget = pn.widgets.TextInput(name='Name Input', value='dmieter')
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
     
-    player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget)
+    player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget, type=select_type_widget)
     tournament_html_pane = pn.bind(getTournamentInfoPanel, id=tournament_input_widget)
 
     tabulatorPrizes = TabulatorPlayerPodiums(name_input_widget)
@@ -508,11 +521,20 @@ def get_page_user():
     bound_singletournament_tab = pn.bind(tabulatorSingleTournament.getData, tournamentId=tournament_input_widget)
 
     bound_tournaments_chart = pn.bind(getTournamentChart, type=select_type_widget)
+    bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget)
 
-    gspec = pn.GridSpec(ncols=8, nrows=30, sizing_mode = "scale_width", styles = background_style)
+    gspec = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
     #gspec[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
-    gspec[0, :3] = pn.Row(pn.Column(getTitlePanel('Недавние Турниры'), pn.Column(select_type_widget, bound_tournamemts_tab, styles = box_style), styles = box_empty_style), pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style), bound_tournaments_chart)
-    gspec[1, :8] = pn.Column(getTitlePanel('Индивидуальные Показатели'), pn.Row(bound_prizes_tab, bound_performance_tab, bound_avscore_tab, bound_totalscore_tab, styles = box_empty_style))
+    gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'),select_type_widget, bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart)
+    gspec[1, :30] = pn.Row(
+                pn.Row(
+                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style)
+                , styles = box_empty_style_h),
+                    pn.Row(
+                        pn.Row(pn.Column(player_html_pane), bound_player_pie_chart, styles = box_style)
+                    , styles = box_empty_style_h)  
+              , styles = box_empty_style)
+    gspec[2, :30] = pn.Row(bound_prizes_tab, bound_performance_tab, bound_avscore_tab, bound_totalscore_tab, styles = box_empty_style)
     #gspec[2, :8] = 
     #gspec[2:6, :8] = pn.Row(pn.Column(pn.pane.HTML("<h3>Турниры</h3>", styles = font_style), bound_tournamemts_tab), bound_prizes_tab)
     #gspec[6:, :] = pn.Spacer(styles=dict(background='#00FF00'))
