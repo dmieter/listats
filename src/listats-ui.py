@@ -296,7 +296,7 @@ def getSinglePlayerPrizesTab(name, type):
         layout='fit_data',
         show_index = False,
         disabled = True,
-        height = 180,
+        height = 240,
         stylesheets=[stylesheet_tabulator_small],
         formatters = tab_formatters
     )
@@ -651,6 +651,6 @@ def get_page_user():
 
 
 
-pn.serve(get_page_user, port=5004, title = 'ШК Торпедо', websocket_origin = '*')
+pn.serve(get_page_user, port=5003, title = 'ШК Торпедо', websocket_origin = '*')
 
 # %%
