@@ -134,6 +134,7 @@ def prepare_prizes_row(row):
 
     return prizes_row
 
+
 def getPrizesTab(type):
     if(type == 'Все'):
         type = None
@@ -256,6 +257,54 @@ def getSingleTournamentTab(tournamentId):
         formatters = tab_formatters
     )
 
+
+def prepare_tournament_prizes_row(row):
+  
+    if(row['place'] == 1):
+        img = img_first_place
+    if(row['place'] == 2):
+        img = img_second_place
+    if(row['place'] == 3):
+        img = img_third_place
+
+    return str(row['eventName']) + img
+
+def getSinglePlayerPrizesTab(name, type):
+    if(type == 'Все'):
+        type = None
+
+    df = ls.loadPlayerPrizes(name, type, None, None)[['place', 'eventName', 'date', 'id']]
+
+    if not df.empty:
+      df['Призы'] = df.apply(lambda x: prepare_tournament_prizes_row(x), axis=1)
+    else:
+        df.rename(columns={'eventName': 'Призы'},
+                            inplace = True)           
+
+    df['date'] = df['date'].astype(str)
+    df['date'] = df['date'].str[:-15]
+
+    df.rename(columns={'date': 'Дата'},
+                            inplace = True)       
+
+    tab_formatters = {
+      'Призы': HTMLTemplateFormatter(template = '<%= value %>')
+    }
+
+    tabulator = pn.widgets.Tabulator(
+        df[['Призы', 'Дата']],
+        layout='fit_data',
+        show_index = False,
+        disabled = True,
+        height = 180,
+        stylesheets=[stylesheet_tabulator_small],
+        formatters = tab_formatters
+    )
+
+
+    return tabulator, df
+
+
 class TabulatorRecentTournaments:
     def __init__(self, tournament_widget):
         self.tournament_widget = tournament_widget
@@ -322,6 +371,18 @@ class TabulatorSingleTournament:
     def click(self, event):
         self.player_name_widget.value = str(self.tabulator_object.value.iloc[event.row]["Игрок"])     
 
+class TabulatorSinglePlayerPrizes:
+    def __init__(self, tournament_widget):
+        self.tournament_widget = tournament_widget
+
+    def getData(self, name, type):
+        self.tabulator_object, self.df = getSinglePlayerPrizesTab(name, type)
+        self.tabulator_object.on_click(self.click)
+        return self.tabulator_object
+
+    def click(self, event):
+        self.tournament_widget.value = str(self.df.iloc[event.row]["id"])
+
 def getPlayerPieChart(name):
     import plotly.express as px
     p = ls.getFilteredPlayers(None, None, None)
@@ -329,7 +390,11 @@ def getPlayerPieChart(name):
     g = p.groupby(['type'], 
                     as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
     
-    fig = px.pie(g, values='typeCount', names='type', title='Турниры')
+    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 600)
+    fig.update_layout(font=dict(
+          family="Roboto"
+        )
+    )
     plot = pn.pane.Plotly(fig, styles = box_empty_style)
 
     return pn.Column(plot)
@@ -338,8 +403,11 @@ def getTournamentChart(type):
     import plotly.express as px
     import plotly.graph_objs as go
 
+    title = type
     if(type == 'Все'):
         type = 'Bundesliga'
+        title = 'Bundesliga '  # fix for strange error when Все switches to Bundesliga
+
 
     t = ls.getFilteredTournaments(type, None, None).sort_values(by='date', ascending = False).head(2000)
     t = t[t.teamScore > 0]
@@ -373,7 +441,7 @@ def getTournamentChart(type):
     fig = go.Figure()
     fig.add_trace(trace)
     fig.update_layout(
-        title = type,
+        title = title,
         template = 'plotly_white',
         plot_bgcolor='rgba(237, 235, 233, 0.3)',
         font=dict(
@@ -437,52 +505,80 @@ def getTournamentInfoPanel(id):
     return html_pane   
 
 
+stylesheet_player_info = """
+
+table {
+	border-collapse: collapse;
+}
+
+td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.basetd {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 3px;
+  padding-right: 20px;
+}
+"""
+
 def getPlayerInfoPanel(name, type):
 
     if(type == 'Все'):
         type = None
 
     info = ls.loadPlayerInfoDict(name, type, None, None)
-    print(info)
+    #print(info)
 
     html_pane = pn.pane.HTML("""
 <h2><a href='https://lichess.org/@/""" + name + """'>""" + name + """</a></h2>
 Активен: """ + str(info["lastActive"])[:-15]  + """
-<br>
-
+<br><br>
 <table>
-      <td></td>
-      <td>Avg</td>
-      <td>Max</td>
+  <tr>
+    <td class = "basetd">
+      <table>
+          <tr>
+            <td class = "basetd">Игр:</td>
+            <td>""" + str(info["totalGames"]) + """</td>
+          </tr>
+          <tr>
+            <td class = "basetd">Очков набрано:</td>
+            <td>""" + str(info["totalPoints"]) + """</td>
+          </tr>
+          <tr>
+            <td class = "basetd">Берсерк:</td>
+            <td>""" + str(info["berserk"]) + """</td>
+          </tr>
+      </table>
+     </td>
+     <td>
+        <table>
+              <td></td>
+              <td>Avg</td>
+              <td>Max</td>
+            </tr>
+            <tr>
+              <td>Перф:</td>
+              <td>""" + str(info["avPerf"]) + """</td>
+              <td>""" + str(info["maxPerf"]) + """</td>
+            </tr>
+            <tr>
+              <td>Темп:</td>
+              <td>""" + str(info["avScore"]) + """</td>
+              <td>""" + str(info["maxAvScore"]) + """</td>
+            </tr>
+        </table>
+      </td>
     </tr>
-    <tr>
-      <td>Перф:</td>
-      <td>""" + str(info["avPerf"]) + """</td>
-      <td>""" + str(info["maxPerf"]) + """</td>
-    </tr>
-    <tr>
-      <td>Темп:</td>
-      <td>""" + str(info["avScore"]) + """</td>
-      <td>""" + str(info["maxAvScore"]) + """</td>
-    </tr>
-</table>
+</table>    
 
-<table>
-    <tr>
-      <td>Игр:</td>
-      <td>""" + str(info["totalGames"]) + """</td>
-    </tr>
-    <tr>
-      <td>Очков набрано:</td>
-      <td>""" + str(info["totalPoints"]) + """</td>
-    </tr>
-    <tr>
-      <td>Берсерк:</td>
-      <td>""" + str(info["berserk"]) + """</td>
-    </tr>
-</table>
 
-""", styles = font_style)
+""", styles = font_style, stylesheets = [stylesheet_player_info])
 
     return html_pane    
 
@@ -496,7 +592,7 @@ def get_page_user():
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value='Все')
     select_indicator_widget = pn.widgets.Select(options=indicators,value='Перф')
-    name_input_widget = pn.widgets.TextInput(name='Name Input', value='dmieter')
+    name_input_widget = pn.widgets.TextInput(name='Name Input', value=ls.getRandomPlayer())
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
     
     player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget, type=select_type_widget)
@@ -520,6 +616,9 @@ def get_page_user():
     tabulatorSingleTournament = TabulatorSingleTournament(name_input_widget)
     bound_singletournament_tab = pn.bind(tabulatorSingleTournament.getData, tournamentId=tournament_input_widget)
 
+    tabulatorSinglePlayerPrizes = TabulatorSinglePlayerPrizes(tournament_input_widget)
+    bound_singleprizes_tab = pn.bind(tabulatorSinglePlayerPrizes.getData, name=name_input_widget, type=select_type_widget)
+
     bound_tournaments_chart = pn.bind(getTournamentChart, type=select_type_widget)
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget)
 
@@ -531,7 +630,7 @@ def get_page_user():
                     pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style)
                 , styles = box_empty_style_h),
                     pn.Row(
-                        pn.Row(pn.Column(player_html_pane), bound_player_pie_chart, styles = box_style)
+                        pn.Row(pn.Column(player_html_pane, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
                     , styles = box_empty_style_h)  
               , styles = box_empty_style)
     gspec[2, :30] = pn.Row(bound_prizes_tab, bound_performance_tab, bound_avscore_tab, bound_totalscore_tab, styles = box_empty_style)
@@ -544,11 +643,14 @@ def get_page_user():
     #gspec[3, :10] = pn.Row(bound_tournamemts_tab, bound_prizes_tab)
     #gspec[4, :10] = pn.Row(select_indicator_widget, bound_indicators_tab)
 
-    return gspec
+    
+    page = pn.template.BootstrapTemplate(favicon = 'img/favicon.ico', logo = 'img/torpedo_icon.jpg',
+    header=None, busy_indicator = None, title = "Шахматный Клуб Торпедо Москва", header_background = '#ffffff')
+    page.main.append(gspec)
+    return page
 
 
 
-
-pn.serve(get_page_user, port=5003, websocket_origin = '*')
+pn.serve(get_page_user, port=5004, title = 'ШК Торпедо', websocket_origin = '*')
 
 # %%

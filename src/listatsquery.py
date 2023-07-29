@@ -243,6 +243,9 @@ def getPodiumsSimple(ttype, tsubtype, periodDays):
 def getRandomTournament():
     return DF_TOURNAMENTS.sample().id.iloc[0]
 
+def getRandomPlayer():
+    return DF_PLAYERS[DF_PLAYERS.games >= 10].sample().playerName.iloc[0]
+
 def loadTournamentInfoDict(id):
     t = DF_TOURNAMENTS[DF_TOURNAMENTS.id == id].iloc[0]
     info = {}
@@ -253,25 +256,35 @@ def loadTournamentInfoDict(id):
 
     return info   
 
+def loadPlayerPrizes(name, ttype, tsubtype, periodDays):
+    t = getFilteredPlayers(ttype, tsubtype, periodDays)
+    t = t[t.playerName == name]
+    return t[t.place <= 3].sort_values(by=['date'], ascending=False)
+
 def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
     t = getFilteredPlayers(ttype, tsubtype, periodDays)
     t = t[t.playerName == name]
     info = {}
     info["lastActive"] = t.date.max()
-    info["maxPerf"] = t[t.games >=5].performance.max()
-    info["avPerf"] = t[t.games >=5].performance.mean()
-    info["maxAvScore"] = t[t.games >=10].avScore.max()
-    info["avScore"] = t.score.sum()/t.games.sum()
-    info["totalGames"] = t.games.sum()
-    info["totalPoints"] = t.score.sum()
-    info["berserk"] = t.berserk.sum()/t.games.sum()
-    prizes_df = t[t.place <= 3]
-    if not prizes_df.empty:
-        info["prizes"] = prizes_df
     
-    #print(t.columns)
+    maxPerf = t[t.games >=5].performance.max()
+    
 
+    avPerf = t[t.games >=5].performance.mean()
+    maxAvScore = t[t.games >=10].avScore.max()
+    totalGames = t.games.sum()
+    totalPoints = t.score.sum()
+    avScore = totalPoints/totalGames
+    berserk = t.berserk.sum()/totalGames
 
+    info["maxPerf"] = '{:.0f}'.format(maxPerf) if not pd.isna(maxPerf) else '-'
+    info["avPerf"] = '{:.0f}'.format(avPerf) if not pd.isna(avPerf) else '-'
+    info["maxAvScore"] = '{:.2f}'.format(maxAvScore) if not pd.isna(maxAvScore) else '-'
+    info["avScore"] = '{:.2f}'.format(avScore) if not pd.isna(avScore) else '-'
+    info["totalGames"] = '{:.0f}'.format(totalGames)
+    info["totalPoints"] = '{:.0f}'.format(totalPoints)
+    info["berserk"] = '{:.2f}'.format(berserk) if not pd.isna(berserk) else '-'
+   
     return info 
 
-print(loadPlayerInfoDict('dmieter', None, None, None))
+print(loadPlayerInfoDict('Aqua_Blazing', 'Mega', None, None))
