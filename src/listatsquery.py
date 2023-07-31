@@ -52,6 +52,7 @@ def loadPandasData():
     players = loadPlayersDataframe().reset_index()
 
     tournaments.type = tournaments.apply(lambda x: retrieveType(x.eventName), axis=1)
+    tournaments['eventName'].replace(' Team Battle$', '', regex = True, inplace = True)
 
     #print(players.head())
     #print(tournaments.head(50))
@@ -61,6 +62,7 @@ def loadPandasData():
 DF_TOURNAMENTS, DF_PLAYERS = loadPandasData()    
 
 # %% HELP FUNCTIONS
+from datetime import datetime
 
 def getFilteredTournaments(ttype, tsubtype, periodDays):
     t = DF_TOURNAMENTS
@@ -72,7 +74,8 @@ def getFilteredTournaments(ttype, tsubtype, periodDays):
         t = t[t['subtype'] == tsubtype]
           
     if periodDays:
-        t = t[t['date'] > date.today() - timedelta(days=periodDays)]
+        print(t.dtypes)
+        t = t[t['date'].dt.date > date.today() - timedelta(days=periodDays)]
     
     return t
 
@@ -126,7 +129,7 @@ def getRecentTournaments(ttype, tsubtype, periodDays, maxNumber):
     #print(t.columns)
     return t
 
-#print(getRecentTournaments(None, None, None, 10)) 
+print(getRecentTournaments(None, None, 10, 10)) 
 #print(getRecentTournaments(None, None, None, 10).columns)    
 
 def getTournamentPlayers(tournamentId):
@@ -274,8 +277,8 @@ def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
     maxAvScore = t[t.games >=10].avScore.max()
     totalGames = t.games.sum()
     totalPoints = t.score.sum()
-    avScore = totalPoints/totalGames
-    berserk = t.berserk.sum()/totalGames
+    avScore = totalPoints/totalGames if totalGames > 0 else pd.NA
+    berserk = 100*t.berserk.sum()/totalGames if totalGames > 0 else pd.NA
 
     info["maxPerf"] = '{:.0f}'.format(maxPerf) if not pd.isna(maxPerf) else '-'
     info["avPerf"] = '{:.0f}'.format(avPerf) if not pd.isna(avPerf) else '-'
@@ -283,7 +286,7 @@ def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
     info["avScore"] = '{:.2f}'.format(avScore) if not pd.isna(avScore) else '-'
     info["totalGames"] = '{:.0f}'.format(totalGames)
     info["totalPoints"] = '{:.0f}'.format(totalPoints)
-    info["berserk"] = '{:.2f}'.format(berserk) if not pd.isna(berserk) else '-'
+    info["berserk"] = '{:.0f}%'.format(berserk) if not pd.isna(berserk) else '-'
    
     return info 
 
