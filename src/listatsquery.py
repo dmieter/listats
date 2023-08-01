@@ -258,10 +258,28 @@ def loadTournamentInfoDict(id):
 
     return info   
 
+def findPlayerAllTournaments(name, ttype, tsubtype, periodDays):
+    t = getFilteredPlayers(ttype, tsubtype, periodDays)
+    t = t[t.playerName == name].sort_values(by=['date'], ascending=False)
+    return t
+
 def loadPlayerPrizes(name, ttype, tsubtype, periodDays):
     t = getFilteredPlayers(ttype, tsubtype, periodDays)
     t = t[t.playerName == name]
     return t[t.place <= 3].sort_values(by=['date'], ascending=False)
+
+def findPlayerBestTournaments(name, ttype, tsubtype, periodDays):
+    t = getFilteredPlayers(ttype, tsubtype, periodDays)
+    t = t[t.playerName == name]
+    df_prizes = t[t.place <= 3]
+
+    df_stats = t[t.games >= 5]
+    df_perf = df_stats.nlargest(3, 'performance')
+    df_score = df_stats.nlargest(2, 'score')
+    df_place = df_stats.nsmallest(3, 'place')
+
+    res = pd.concat([df_prizes, df_perf, df_score, df_place]).drop_duplicates().reset_index(drop=True).sort_values(by=['date'], ascending=False)
+    return res
 
 def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
     t = getFilteredPlayers(ttype, tsubtype, periodDays)

@@ -21,6 +21,9 @@ SHOW_ALL_TOURNAMENTS = 'Все турниры'
 tTypes = np.append([SHOW_ALL_TOURNAMENTS], tTypes)
 tTypes = tTypes[tTypes != None]
 
+PLAYER_TOURNAMENTS_ALL = 'Все'
+PLAYER_TOURNAMENTS_BEST = 'Лучшие'
+
 indicators = ['Набранные очки', 'Темп', 'Игры', 'Берсерк', 'Перф', 'Место']
 indicatorsMap = {'Набранные очки':'score', 'Темп':'avScore', 'Игры':'games', 'Берсерк':'avBerserk', 'Перф':'performance', 'Место':'place'}
 indicatorsOpt = {'Набранные очки':False, 'Темп':False, 'Игры':False, 'Берсерк':False, 'Перф':False, 'Место':True}
@@ -313,40 +316,51 @@ def prepare_tournament_prizes_row(row):
         img = img_third_place
 
     return str(row['eventName']) + img
+    
 
-def getSinglePlayerPrizesTab(name, type, timePeriod, existingTabulator):
+def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
       type = None
 
-    df = ls.loadPlayerPrizes(name, type, None, timeMap[timePeriod])[['place', 'eventName', 'date', 'id']]
-
-    if not df.empty:
-      df['Призы'] = df.apply(lambda x: prepare_tournament_prizes_row(x), axis=1)
+    if PLAYER_TOURNAMENTS_BEST == tableType:
+        df = ls.findPlayerBestTournaments(name, type, None, timeMap[timePeriod])[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]
     else:
-        df.rename(columns={'eventName': 'Призы'},
-                            inplace = True)           
+        df = ls.findPlayerAllTournaments(name, type, None, timeMap[timePeriod])[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]    
+
+    df.place = pd.to_numeric(df.place)
+    df.loc[df.place == 1, 'place'] = img_first_place
+    df.loc[df.place == 2, 'place'] = img_second_place
+    df.loc[df.place == 3, 'place'] = img_third_place           
 
     df['date'] = df['date'].astype(str)
     df['date'] = df['date'].str[:-15]
 
-    df.rename(columns={'date': 'Дата'},
+    df.rename(columns={'date': 'Дата',
+                       'eventName': 'Турнир',
+                       'place': 'Место',
+                       'games': 'Игры',
+                       'score': 'Очки',
+                       'performance': 'Перф'},
                             inplace = True)       
 
     tab_formatters = {
-      'Призы': HTMLTemplateFormatter(template = '<%= value %>')
+      'Место': HTMLTemplateFormatter(template = '<%= value %>'),
+      'Очки': NumberFormatter(format='0'),
+      'Игры': NumberFormatter(format='0'),
+      'Перф': NumberFormatter(format='0')
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Призы', 'Дата']]
+        existingTabulator.value = df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']]
         tabulator = existingTabulator
     else:    
         tabulator = pn.widgets.Tabulator(
-          df[['Призы', 'Дата']],
-          widths={'Призы': 300},
+          df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']],
+          widths={'Турнир': 200},
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 240,
+          height = 245,
           stylesheets=[stylesheet_tabulator_small],
           formatters = tab_formatters
         )
@@ -430,8 +444,8 @@ class TabulatorSinglePlayerPrizes:
         self.tournament_widget = tournament_widget
         self.tabulator_object = None
 
-    def getData(self, name, type, timePeriod):
-        self.tabulator_object, self.df = getSinglePlayerPrizesTab(name, type, timePeriod, self.tabulator_object)
+    def getData(self, name, type, timePeriod, tableType):
+        self.tabulator_object, self.df = getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, self.tabulator_object)
         self.tabulator_object.on_click(self.click)
         return self.tabulator_object
 
@@ -668,6 +682,7 @@ def get_page_user():
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
     name_input_widget = pn.widgets.TextInput(value=ls.getRandomPlayer(), width = 200)
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
+    select_player_table_type_widget = pn.widgets.RadioButtonGroup(options=[PLAYER_TOURNAMENTS_BEST, PLAYER_TOURNAMENTS_ALL], button_type='light', value = PLAYER_TOURNAMENTS_BEST)
     
     player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget, type=select_type_widget, timePeriod = select_time_widget)
     tournament_html_pane = pn.bind(getTournamentInfoPanel, id=tournament_input_widget)
@@ -691,7 +706,7 @@ def get_page_user():
     bound_singletournament_tab = pn.bind(tabulatorSingleTournament.getData, tournamentId=tournament_input_widget)
 
     tabulatorSinglePlayerPrizes = TabulatorSinglePlayerPrizes(tournament_input_widget)
-    bound_singleprizes_tab = pn.bind(tabulatorSinglePlayerPrizes.getData, name=name_input_widget, type=select_type_widget, timePeriod = select_time_widget)
+    bound_singleprizes_tab = pn.bind(tabulatorSinglePlayerPrizes.getData, name=name_input_widget, type=select_type_widget, timePeriod = select_time_widget, tableType = select_player_table_type_widget)
 
     bound_tournaments_chart = pn.bind(getTournamentChart, type=select_type_widget, timePeriod = select_time_widget)
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
@@ -701,10 +716,10 @@ def get_page_user():
     gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart, styles = box_empty_style_v)
     gspec[1, :30] = pn.Row(
                 pn.Row(
-                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 499)
+                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 545)
                     , styles = box_empty_style_h),
                     pn.Row(
-                        pn.Row(pn.Column(name_input_widget, player_html_pane, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
+                        pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
                         , styles = box_empty_style_h)  
                   , styles = box_empty_style_v)
     gspec[2, :30] = pn.Row(pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h), 
