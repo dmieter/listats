@@ -74,7 +74,6 @@ def getFilteredTournaments(ttype, tsubtype, periodDays):
         t = t[t['subtype'] == tsubtype]
           
     if periodDays:
-        print(t.dtypes)
         t = t[t['date'].dt.date > date.today() - timedelta(days=periodDays)]
     
     return t
@@ -129,7 +128,7 @@ def getRecentTournaments(ttype, tsubtype, periodDays, maxNumber):
     #print(t.columns)
     return t
 
-print(getRecentTournaments(None, None, 10, 10)) 
+#print(getRecentTournaments(None, None, 10, 10)) 
 #print(getRecentTournaments(None, None, None, 10).columns)    
 
 def getTournamentPlayers(tournamentId):

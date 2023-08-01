@@ -33,7 +33,9 @@ timeTypes = list(timeMap.keys())
 
 box_style = {'background-color': '#FFFFFF','border-radius': '5px','padding': '10px','box-shadow': '5px 5px 5px #bcbcbc'}
 box_empty_style = {'padding-top': '15px', 'padding-left': '15px'}
+box_empty_style_small = {'padding-top': '5px', 'padding-left': '5px'}
 box_empty_style_h = {'padding-left': '15px'}
+box_empty_style_v = {'padding-bottom': '25px'}
 font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
@@ -41,6 +43,8 @@ img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mz
 img_first_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
 img_second_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
 img_third_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
+
+stylesheet_root = """ @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap'); """
 
 stylesheet_tabulator = """
 
@@ -168,8 +172,8 @@ def getPrizesTab(type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 490,
-          stylesheets=[stylesheet_tabulator],
+          height = 420,
+          stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
 
@@ -214,8 +218,8 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 490,
-          stylesheets=[stylesheet_tabulator],
+          height = 420,
+          stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
 
@@ -255,8 +259,8 @@ def getTotalScoreTab(type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 490,
-          stylesheets=[stylesheet_tabulator],
+          height = 420,
+          stylesheets=[stylesheet_tabulator_small],
           formatters = tab_formatters
         )
 
@@ -638,6 +642,7 @@ def getPlayerInfoPanel(name, type, timePeriod):
 
 
 stylesheet_panel_title = """
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400&display=swap');
 #header
 .title
 {
@@ -693,16 +698,20 @@ def get_page_user():
 
     gspec = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
     #gspec[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
-    gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart)
+    gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart, styles = box_empty_style_v)
     gspec[1, :30] = pn.Row(
                 pn.Row(
                     pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 499)
-                , styles = box_empty_style_h),
+                    , styles = box_empty_style_h),
                     pn.Row(
                         pn.Row(pn.Column(name_input_widget, player_html_pane, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
-                    , styles = box_empty_style_h)  
-              , styles = box_empty_style)
-    gspec[2, :30] = pn.Row(bound_prizes_tab, bound_performance_tab, bound_avscore_tab, bound_totalscore_tab, styles = box_empty_style)
+                        , styles = box_empty_style_h)  
+                  , styles = box_empty_style_v)
+    gspec[2, :30] = pn.Row(pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h), 
+                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Перформансу'), bound_performance_tab, styles = box_style), styles = box_empty_style_h),  
+                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Темпу'), bound_avscore_tab, styles = box_style), styles = box_empty_style_h), 
+                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Очкам'), bound_totalscore_tab, styles = box_style), styles = box_empty_style_h)
+                           , styles = box_empty_style_v)
 
 
     

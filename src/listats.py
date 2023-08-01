@@ -9,8 +9,6 @@ from bs4 import BeautifulSoup as bs
 import time
 
 from datetime import timedelta, date
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
 # %% GLOBALS
 
@@ -41,13 +39,14 @@ def saveTournamentsDataFrame():
     global DF_TOURNAMENTS
     DF_TOURNAMENTS.to_pickle(dfTournamentsFileName)  
 
-#DF_TOURNAMENTS = loadTournamentsDataframe()
-#DF_PLAYERS = loadPlayersDataframe()
+DF_TOURNAMENTS = loadTournamentsDataframe()
+DF_PLAYERS = loadPlayersDataframe()
 
 # %% NULLIFY
 
-DF_TOURNAMENTS = pd.DataFrame()
-DF_PLAYERS = pd.DataFrame()
+# Use with care!
+#DF_TOURNAMENTS = pd.DataFrame()
+#DF_PLAYERS = pd.DataFrame()
 
 
 
@@ -294,17 +293,15 @@ def loadTeamTournamentsFromUrl(number):
 
 
 
-# %% UPLOAD    
+# %% UPLOAD TEST   
     
 
 
-#loadTeamTournamentsFromUrl(10000)
-loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
+#loadTeamTournamentsFromUrl(100)
+#loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
 
 #DEBUG
 #loadTournamentFull('OxhpZ8kX', None, None) #removed?
 #loadTournamentFull('Nrhgv49W', None, None)
 #loadTournamentFull('TnUnNHLe', None, None)
 
-
-    
