@@ -43,9 +43,9 @@ font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
 img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
-img_first_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
-img_second_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
-img_third_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
+img_first_place = '<img class = "1" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
+img_second_place = '<img class = "2" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
+img_third_place = '<img class = "3" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
 
 stylesheet_root = """ @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap'); """
 
@@ -360,7 +360,7 @@ def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTab
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 245,
+          height = 215,
           stylesheets=[stylesheet_tabulator_small],
           formatters = tab_formatters
         )
@@ -459,7 +459,7 @@ def getPlayerPieChart(name, timePeriod):
     g = p.groupby(['type'], 
                     as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
     
-    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 600)
+    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 550)
     fig.update_layout(font=dict(
           family="Roboto"
         )
@@ -716,7 +716,7 @@ def get_page_user():
     gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart, styles = box_empty_style_v)
     gspec[1, :30] = pn.Row(
                 pn.Row(
-                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 545)
+                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
                     , styles = box_empty_style_h),
                     pn.Row(
                         pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
