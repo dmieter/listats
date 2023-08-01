@@ -8,6 +8,7 @@ import json
 from bs4 import BeautifulSoup as bs
 import time
 
+import datetime
 from datetime import timedelta, date
 
 # %% GLOBALS
@@ -258,7 +259,9 @@ def loadTeamTournaments(data_json):
         
         tournamentsList = []
         for tournamentJson in data_json:
-            tournamentsList.append(tournamentJson['id'])
+            if not 'secondsToStart' in tournamentJson.keys():
+                tournamentsList.append(tournamentJson['id'])
+                print(datetime.datetime.fromtimestamp(tournamentJson['startsAt']/1000))
 
         tournamentNumber = 1
         tournamentsNumber = len(tournamentsList)
@@ -297,7 +300,7 @@ def loadTeamTournamentsFromUrl(number):
     
 
 
-#loadTeamTournamentsFromUrl(100)
+#loadTeamTournamentsFromUrl(35)
 #loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
 
 #DEBUG
