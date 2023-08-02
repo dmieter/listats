@@ -676,7 +676,7 @@ width: 20px;
 
 def get_page_user():
     
-    DF_TOURNAMENTS, DF_PLAYERS = ls.loadPandasData()  
+    ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
