@@ -21,8 +21,10 @@ SHOW_ALL_TOURNAMENTS = 'Все турниры'
 tTypes = np.append([SHOW_ALL_TOURNAMENTS], tTypes)
 tTypes = tTypes[tTypes != None]
 
-PLAYER_TOURNAMENTS_ALL = 'Все'
-PLAYER_TOURNAMENTS_BEST = 'Лучшие'
+class playerTournamentTypes:
+  PLAYER_TOURNAMENTS_ALL = 'Все'
+  PLAYER_TOURNAMENTS_BEST = 'Лучшие'
+  PLAYER_TOURNAMENTS_PRIZES = 'Призовые'
 
 indicators = ['Набранные очки', 'Темп', 'Игры', 'Берсерк', 'Перф', 'Место']
 indicatorsMap = {'Набранные очки':'score', 'Темп':'avScore', 'Игры':'games', 'Берсерк':'avBerserk', 'Перф':'performance', 'Место':'place'}
@@ -43,9 +45,9 @@ font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
 img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
-img_first_place = '<img class = "1" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
-img_second_place = '<img class = "2" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
-img_third_place = '<img class = "3" src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
+img_first_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
+img_second_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
+img_third_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
 
 stylesheet_root = """ @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap'); """
 
@@ -74,7 +76,7 @@ stylesheet_tabulator = """
 stylesheet_tabulator_small = """
 
 .tabulator {
-  padding: 5px;
+  padding: 3px;
 }
 
 .tabulator-cell {
@@ -94,6 +96,34 @@ stylesheet_tabulator_small = """
 
 # %% Data preparation
 
+# helper function to calculate sortable place tag with img
+def prepareSortingTag(value, ascending = True):
+    prefix = '99' if ascending else '00'
+    sorting_class = ''
+
+    res = value/10
+    while res >= 1:
+        sorting_class = sorting_class + prefix
+        res = res/10
+
+    return '<tablesort class = "{}{}"/>'.format(sorting_class, value)    
+
+def prepare_sorted_place_value(row, field = 'place'):
+  
+    place = row[field]
+
+    if(place == 1):
+        img = img_first_place
+    elif(place == 2):
+        img = img_second_place
+    elif(place == 3):
+        img = img_third_place
+    else:
+        img = '{:.0f}'.format(place)    
+
+
+    return prepareSortingTag(place) + img
+    
 
 def getRecentTournamentsTab(type, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
@@ -102,9 +132,7 @@ def getRecentTournamentsTab(type, existingTabulator):
     df = ls.getRecentTournaments(type, None, None, 12)    
 
     df.teamPlace = pd.to_numeric(df.teamPlace)
-    df.loc[df.teamPlace == 1, 'teamPlace'] = img_first_place
-    df.loc[df.teamPlace == 2, 'teamPlace'] = img_second_place
-    df.loc[df.teamPlace == 3, 'teamPlace'] = img_third_place
+    df['teamPlace'] = df.apply(lambda x: prepare_sorted_place_value(x, field = 'teamPlace'), axis=1)          
     
     df['date'] = df['date'].astype(str)
     df['date'] = df['date'].str[:-15]
@@ -271,9 +299,8 @@ def getSingleTournamentTab(tournamentId, existingTabulator):
 
     df = ls.getTournamentPlayers(tournamentId).sort_values(by='place', ascending=True)
 
-    df.loc[df.place == 1, 'place'] = img_first_place
-    df.loc[df.place == 2, 'place'] = img_second_place
-    df.loc[df.place == 3, 'place'] = img_third_place
+    df.place = pd.to_numeric(df.place)
+    df['place'] = df.apply(lambda x: prepare_sorted_place_value(x), axis=1)          
 
     df.rename(columns={'playerName': 'Игрок', 
                        'place': 'Место',
@@ -306,31 +333,29 @@ def getSingleTournamentTab(tournamentId, existingTabulator):
         )
 
 
-def prepare_tournament_prizes_row(row):
-  
-    if(row['place'] == 1):
-        img = img_first_place
-    if(row['place'] == 2):
-        img = img_second_place
-    if(row['place'] == 3):
-        img = img_third_place
 
-    return str(row['eventName']) + img
-    
 
 def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
       type = None
 
-    if PLAYER_TOURNAMENTS_BEST == tableType:
-        df = ls.findPlayerBestTournaments(name, type, None, timeMap[timePeriod])[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]
-    else:
-        df = ls.findPlayerAllTournaments(name, type, None, timeMap[timePeriod])[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]    
+    match tableType:
+      case playerTournamentTypes.PLAYER_TOURNAMENTS_BEST:
+        df = ls.findPlayerBestTournaments(name, type, None, timeMap[timePeriod])
+
+      case playerTournamentTypes.PLAYER_TOURNAMENTS_PRIZES:
+        df = ls.findPlayerPrizes(name, type, None, timeMap[timePeriod])
+
+      case playerTournamentTypes.PLAYER_TOURNAMENTS_ALL:
+        df = ls.findPlayerAllTournaments(name, type, None, timeMap[timePeriod])
+
+      case _:
+        df = ls.findPlayerBestTournaments(name, type, None, timeMap[timePeriod])
+
+    df = df[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]        
 
     df.place = pd.to_numeric(df.place)
-    df.loc[df.place == 1, 'place'] = img_first_place
-    df.loc[df.place == 2, 'place'] = img_second_place
-    df.loc[df.place == 3, 'place'] = img_third_place           
+    df['place'] = df.apply(lambda x: prepare_sorted_place_value(x), axis=1)          
 
     df['date'] = df['date'].astype(str)
     df['date'] = df['date'].str[:-15]
@@ -682,7 +707,7 @@ def get_page_user():
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
     name_input_widget = pn.widgets.TextInput(value=ls.getRandomPlayer(), width = 200)
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
-    select_player_table_type_widget = pn.widgets.RadioButtonGroup(options=[PLAYER_TOURNAMENTS_BEST, PLAYER_TOURNAMENTS_ALL], button_type='light', value = PLAYER_TOURNAMENTS_BEST)
+    select_player_table_type_widget = pn.widgets.RadioButtonGroup(options=[playerTournamentTypes.PLAYER_TOURNAMENTS_BEST, playerTournamentTypes.PLAYER_TOURNAMENTS_PRIZES, playerTournamentTypes.PLAYER_TOURNAMENTS_ALL], button_type='light', value = playerTournamentTypes.PLAYER_TOURNAMENTS_BEST)
     
     player_html_pane = pn.bind(getPlayerInfoPanel, name=name_input_widget, type=select_type_widget, timePeriod = select_time_widget)
     tournament_html_pane = pn.bind(getTournamentInfoPanel, id=tournament_input_widget)
@@ -741,6 +766,6 @@ def get_page_user():
 
 
 
-pn.serve(get_page_user, port=5003, title = 'ШК Торпедо', websocket_origin = '*')
+pn.serve(get_page_user, port=5002, title = 'ШК Торпедо', websocket_origin = '*')
 
 # %%
