@@ -766,6 +766,6 @@ def get_page_user():
 
 
 
-pn.serve(get_page_user, port=5002, title = 'ШК Торпедо', websocket_origin = '*')
+pn.serve(get_page_user, port=5003, title = 'ШК Торпедо', websocket_origin = '*')
 
 # %%
