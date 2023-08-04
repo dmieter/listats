@@ -27,7 +27,7 @@ def loadTournamentsDataframe():
 def retrieveType(tName):
     if('Indonesia'.lower() in tName.lower()):
         return 'Indonesia'
-    elif('Bundesliga'.lower() in tName.lower()):  
+    elif('Bundesliga'.lower() in tName.lower() or 'Lichess Liga '.lower() in tName.lower()):
         return 'Bundesliga'
     elif('Mega A'.lower() in tName.lower()):  
         return 'Mega'
