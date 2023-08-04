@@ -11,19 +11,15 @@ import time
 import datetime
 from datetime import timedelta, date
 
+import sys
+
 # %% GLOBALS
 
-TORPEDO_TEAM_ID = 'xaj9uK9X'
-ECOSYSTEM_TEAM_ID = 'ChfzrMPn'
-TEAM_ID = TORPEDO_TEAM_ID
-dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
-dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
-#dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
-#dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
+import listatsinput as lsi
+TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName = lsi.loadInputTeam()
 
 
 pointsMap = {True : np.array([1, 0 ,0]), False : np.array([0 , 0, 1]), None : np.array([0, 1, 0])}
-
 
 
 def loadPlayersDataframe():

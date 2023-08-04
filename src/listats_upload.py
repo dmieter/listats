@@ -1,12 +1,12 @@
 # %% MAIN
 import listats as ls
-import sys
-from datetime import date
+import listatsinput as lsi
+from datetime import datetime
  
-N = int(sys.argv[1])  # number of recent tournaments to load
-if N > 100:
-    N = 100
+N = int(lsi.loadArgument(2, default = 10))  # number of recent tournaments to load
+if N > 1000:
+    N = 1000
 
 if N > 0:
-    print('Loading {} tournaments at {}'.format(N, date.today()))    
+    print('Loading {} tournaments at {}'.format(N, datetime.now()))    
     ls.loadTeamTournamentsFromUrl(N)

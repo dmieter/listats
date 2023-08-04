@@ -1,4 +1,5 @@
 import listatsquery as ls
+import listatsinput as lsi
 import numpy as np
 import pandas as pd
 
@@ -33,6 +34,8 @@ indicatorsOpt = {'Набранные очки':False, 'Темп':False, 'Игр�
 SHOW_WHOLE_TIME = 'За все время'
 timeMap = {'Неделя' : 7, 'Месяц' : 30, 'Год' : 366, SHOW_WHOLE_TIME : None}
 timeTypes = list(timeMap.keys())
+
+pageTitleMap = {lsi.TORPEDO_TEAM_ID : 'ШК Торпедо Москва', lsi.ECOSYSTEM_TEAM_ID : 'ШК Экосистема СБ'}
 
 # %% STYLES
 
@@ -97,16 +100,8 @@ stylesheet_tabulator_small = """
 # %% Data preparation
 
 # helper function to calculate sortable place tag with img
-def prepareSortingTag(value, ascending = True):
-    prefix = '99' if ascending else '00'
-    sorting_class = ''
-
-    res = value/10
-    while res >= 1:
-        sorting_class = sorting_class + prefix
-        res = res/10
-
-    return '<tablesort class = "{}{}"/>'.format(sorting_class, value)    
+def prepareSortingTag(value, max_value = 1000000, ascending = True):
+   return '<ts class = "{:.8f}"/>'.format(value/max_value)    
 
 def prepare_sorted_place_value(row, field = 'place'):
   
@@ -699,6 +694,8 @@ width: 20px;
 
 # %% SERVER
 
+import sys
+
 def get_page_user():
     
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
@@ -759,13 +756,14 @@ def get_page_user():
     header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
 
     page = pn.template.BootstrapTemplate(favicon = 'img/favicon.ico', logo = 'img/torpedo_icon.jpg',
-    header=header_row, busy_indicator = None, title = "ШК Торпедо Москва", header_background = '#ffffff')
+    header=header_row, busy_indicator = None, title = pageTitleMap[ls.TEAM_ID], header_background = '#ffffff')
     page.config.raw_css.append(stylesheet_panel_title)
     page.main.append(gspec)
     return page
 
 
 
-pn.serve(get_page_user, port=5003, title = 'ШК Торпедо', websocket_origin = '*')
+serve_port = int(lsi.loadArgument(2, default = 5003))
+pn.serve({ls.TEAM_NAME : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
 # %%

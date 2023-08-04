@@ -8,9 +8,12 @@ import pandas as pd
 from datetime import timedelta, date
 
 # %% GLOBALS
+import listatsinput as lsi
 
-dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
-dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
+TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName = lsi.loadInputTeam()
+
+#dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
+#dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
 #dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
 #dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
 
