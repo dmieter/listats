@@ -312,7 +312,7 @@ def loadTeamTournamentsFromUrl(number):
     
 
 
-loadTeamTournamentsFromUrl(31)
+#loadTeamTournamentsFromUrl(31)
 #loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
 
 #DEBUG

@@ -310,4 +310,4 @@ def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
     return info 
 
 #print(loadPlayerInfoDict('Aqua_Blazing', 'Mega', None, None))
-print(getRecentTournaments(None, None, None, 100)[['date', 'finishTime']])
+#print(getRecentTournaments(None, None, None, 100)[['date', 'finishTime']])
