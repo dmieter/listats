@@ -6,7 +6,7 @@ import pandas as pd
 # %% PANEL EXAMPLE
 
 
-import param
+from datetime import datetime
 import panel as pn
 from panel.theme import Bootstrap, Material, Native, Fast 
 from bokeh.models.widgets import HTMLTemplateFormatter, NumberFormatter
@@ -74,6 +74,13 @@ stylesheet_tabulator = """
   font-size: 12px;
   height: 20px;
 }
+
+#online{
+    padding-left: 3px;
+    padding-bottom: 1px;
+    font-size: 14px;
+    color: #629924;
+}
 """
 
 stylesheet_tabulator_small = """
@@ -94,6 +101,13 @@ stylesheet_tabulator_small = """
   font-size: 12px;
   height: 20px;
 }
+
+#online{
+    padding-left: 3px;
+    padding-bottom: 1px;
+    font-size: 14px;
+    color: #629924;
+}
 """
 
 
@@ -102,6 +116,18 @@ stylesheet_tabulator_small = """
 # helper function to calculate sortable place tag with img
 def prepareSortingTag(value, max_value = 1000000, ascending = True):
    return '<ts class = "{:.8f}"/>'.format(value/max_value)    
+
+def prepare_tournament_name(row, time = datetime.now()):
+    if not pd.isna(row.finishTime) and row.finishTime.timestamp() > time.timestamp():
+        return '<b>' + row.eventName + ' (Live)</b> <i id="online">&#x25CF;</i>'
+    else:
+        return row.eventName
+    
+def prepare_tournament_date(row, time = datetime.now()):
+    if not pd.isna(row.finishTime) and row.finishTime.timestamp() > time.timestamp():
+        return '<b>' + row.date + '</b> <i id="online">&#x25CF;</i>'
+    else:
+        return row.date    
 
 def prepare_sorted_place_value(row, field = 'place'):
   
@@ -114,8 +140,7 @@ def prepare_sorted_place_value(row, field = 'place'):
     elif(place == 3):
         img = img_third_place
     else:
-        img = '{:.0f}'.format(place)    
-
+        img = '{:.0f}'.format(place) 
 
     return prepareSortingTag(place) + img
     
@@ -127,13 +152,20 @@ def getRecentTournamentsTab(type, existingTabulator):
     df = ls.getRecentTournaments(type, None, None, 12)    
 
     df.teamPlace = pd.to_numeric(df.teamPlace)
-    df['teamPlace'] = df.apply(lambda x: prepare_sorted_place_value(x, field = 'teamPlace'), axis=1)          
+    df['teamPlace'] = df.apply(lambda x: prepare_sorted_place_value(x, field = 'teamPlace'), axis=1)
+
+    currentTime = datetime.now()  
+    df['eventName'] = df.apply(lambda x: prepare_tournament_name(x, currentTime), axis=1)          
     
     df['date'] = df['date'].astype(str)
     df['date'] = df['date'].str[:-15]
+    #df['date'] = df.apply(lambda x: prepare_tournament_date(x, currentTime), axis=1)
+
+    df['timeControl'] = df['timeControl'].fillna('')
 
     df.rename(columns={'eventName': 'Турнир', 
                             'date': 'Дата', 
+                            'timeControl': 'Часы', 
                             'teamPlace': 'Место', 
                             'teamScore': 'Очки', 
                             'cntPlayers': 'Участники', 
@@ -143,16 +175,17 @@ def getRecentTournamentsTab(type, existingTabulator):
 
     tab_formatters = {
       'Турнир': HTMLTemplateFormatter(template = '<%= value %>'),
+      'Дата': HTMLTemplateFormatter(template = '<%= value %>'),
       'Место': HTMLTemplateFormatter(template = '<%= value %>')
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Турнир', 'Место', 'Дата']]
+        existingTabulator.value = df[['Турнир', 'Место', 'Часы', 'Дата']]
         tournamentsTab = existingTabulator
     else:     
         tournamentsTab = pn.widgets.Tabulator(
-          df[['Турнир', 'Место', 'Дата']],
-          widths={'Турнир': 280},
+          df[['Турнир', 'Место', 'Часы', 'Дата']],
+          widths={'Турнир': 280, 'Дата': 80},
           layout='fit_data_fill',
           disabled = True, 
           #theme='semantic-ui', 

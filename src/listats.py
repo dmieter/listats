@@ -207,6 +207,20 @@ def getTournamentPlayers(tournamentId, teamId, isIndividual = False):
     else:
         return pd.DataFrame()
 
+def calcFinishTime(tournamentData):
+    startTime = pd.to_datetime(tournamentData['startsAt'])
+
+    return startTime + datetime.timedelta(minutes=int(tournamentData['minutes']))
+
+def decodeTimeControl(tournamentData):
+    minutes = tournamentData['clock']['limit']/60
+    increment = tournamentData['clock']['increment']
+
+    if minutes < 1 and minutes > 0:
+        return '{:.1f}+{}'.format(minutes, increment)
+    else:
+        return '{:.0f}+{}'.format(minutes, increment)
+
 def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
     tournamentData = loadTournamentJson(tournamentId)
     
@@ -218,6 +232,8 @@ def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
                          'subtype': tournamentSubtype, 
                          'eventName': tournamentData['fullName'], 
                          'date':  tournamentData['startsAt'],
+                         'finishTime': calcFinishTime(tournamentData),
+                         'timeControl': decodeTimeControl(tournamentData),
                          'teamPlace': place,
                          'teamScore': score
                          }
@@ -296,11 +312,11 @@ def loadTeamTournamentsFromUrl(number):
     
 
 
-#loadTeamTournamentsFromUrl(35)
+loadTeamTournamentsFromUrl(31)
 #loadTeamTournamentsFromFile('torpedo_tournaments_23_07_24.json')
 
 #DEBUG
-#loadTournamentFull('OxhpZ8kX', None, None) #removed?
+#loadTournamentFull('Mlm5kQLv', None, None) #removed?
 #loadTournamentFull('Nrhgv49W', None, None)
 #loadTournamentFull('TnUnNHLe', None, None)
 
