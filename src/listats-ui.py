@@ -796,7 +796,8 @@ def get_page_user():
 
 
 
-serve_adress = {lsi.TORPEDO_TEAM_NAME : "/"}
+#serve_adress = {lsi.TORPEDO_TEAM_NAME : "/"}
+serve_adress = {}
 
 serve_port = int(lsi.loadArgument(2, default = 5003))
 pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
