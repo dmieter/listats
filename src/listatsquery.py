@@ -94,7 +94,11 @@ def getFilteredPlayers(ttype, tsubtype, periodDays, titles=False):
         return p
     else:
         return removeTitlesInfo(p)
-
+    
+def getFilteredPlayersLower(ttype, tsubtype, periodDays, titles=False):    
+    players = getFilteredPlayers(ttype, tsubtype, periodDays, titles)
+    players['lowerPlayerName'] = players.playerName.str.lower()
+    return players
 
 
 def getCorrespondingPlayers(dfTournaments):
@@ -172,8 +176,8 @@ def getBestPerformances(ttype, tsubtype, periodDays, maxNumber):
     return calcBestSimpleIndicator('performance', ttype, tsubtype, periodDays, False).head(maxNumber)
 
 def getBestPlayerIndicator(playerName, indicator, ttype, tsubtype, periodDays, minimize = False):
-    p = getFilteredPlayers(ttype, tsubtype, periodDays)
-    p = p[p['playerName'] == playerName]
+    p = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    p = p[p['lowerPlayerName'] == playerName.lower()]
     return p.sort_values(by=[indicator], ascending=minimize)
 
 def getBestPlayerPerformance(playerName, ttype, tsubtype, periodDays, maxSize):
@@ -262,18 +266,18 @@ def loadTournamentInfoDict(id):
     return info   
 
 def findPlayerAllTournaments(name, ttype, tsubtype, periodDays):
-    t = getFilteredPlayers(ttype, tsubtype, periodDays)
-    t = t[t.playerName == name].sort_values(by=['date'], ascending=False)
+    t = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    t = t[t.lowerPlayerName == name.lower()].sort_values(by=['date'], ascending=False)
     return t
 
 def findPlayerPrizes(name, ttype, tsubtype, periodDays):
-    t = getFilteredPlayers(ttype, tsubtype, periodDays)
-    t = t[t.playerName == name]
+    t = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    t = t[t.lowerPlayerName == name.lower()]
     return t[t.place <= 3].sort_values(by=['date'], ascending=False)
 
 def findPlayerBestTournaments(name, ttype, tsubtype, periodDays):
-    t = getFilteredPlayers(ttype, tsubtype, periodDays)
-    t = t[t.playerName == name]
+    t = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    t = t[t.lowerPlayerName == name.lower()]
     
     df_stats = t[t.games >= 5]
     df_perf = df_stats.nlargest(4, 'performance')
@@ -284,8 +288,8 @@ def findPlayerBestTournaments(name, ttype, tsubtype, periodDays):
     return res
 
 def loadPlayerInfoDict(name, ttype, tsubtype, periodDays):
-    t = getFilteredPlayers(ttype, tsubtype, periodDays)
-    t = t[t.playerName == name]
+    t = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    t = t[t.lowerPlayerName == name.lower()]
     info = {}
     info["lastActive"] = t.date.max()
     

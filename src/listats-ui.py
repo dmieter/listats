@@ -525,8 +525,8 @@ class TabulatorSinglePlayerPrizes:
 
 def getPlayerPieChart(name, timePeriod):
     import plotly.express as px
-    p = ls.getFilteredPlayers(None, None, timeMap[timePeriod])
-    p = p[p['playerName'] == name]
+    p = ls.getFilteredPlayersLower(None, None, timeMap[timePeriod])
+    p = p[p['lowerPlayerName'] == name.lower()]
     g = p.groupby(['type'], 
                     as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
     
@@ -839,7 +839,7 @@ def get_page_user(is_mobile = False):
 def get_mobile_page_user():
     return get_page_user(is_mobile = True)
 
-serve_port = int(lsi.loadArgument(2, default = 5003))
+serve_port = int(lsi.loadArgument(2, default = 5008))
 #pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 pn.serve({ls.TEAM_NAME : get_page_user, 'mobile' : get_mobile_page_user,'' : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
