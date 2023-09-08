@@ -114,6 +114,21 @@ stylesheet_tabulator_small = """
 """
 
 
+class UIProperties:
+  """A class that stores UI properties."""
+
+  def __init__(self, is_mobile: bool, theme: str):
+    """Initializes a UIProperties object.
+
+    Args:
+      is_mobile: Whether the UI is for a mobile device.
+      theme: The theme of the UI.
+    """
+
+    self.is_mobile = is_mobile
+    self.theme = theme
+
+
 # %% Data preparation
 
 # helper function to calculate sortable place tag with img
@@ -735,6 +750,8 @@ import sys
 
 def get_page_user(is_mobile = False):
     
+    uiProperties = UIProperties(is_mobile, 'default')
+
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
@@ -774,9 +791,15 @@ def get_page_user(is_mobile = False):
     tournamnet_widget = pn.Row(
                             pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
                         , styles = box_empty_style_h)
-    player_widget = pn.Row(
-                        pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
-                    , styles = box_empty_style_h)
+    
+    if not is_mobile:
+        player_widget = pn.Row(
+                          pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
+                      , styles = box_empty_style_h)
+    else:
+        player_widget = pn.Row(
+                          pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), styles = box_style)
+                      , styles = box_empty_style_h)
     
     prizes_widget = pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h)
     perf_widget = pn.Row(pn.Column(getTitlePanel('Топ 100 по Перформансу'), bound_performance_tab, styles = box_style), styles = box_empty_style_h)
@@ -803,7 +826,8 @@ def get_page_user(is_mobile = False):
 
     
     header_row = pn.Row(getTextPanel(''), select_type_widget, select_time_widget)
-    header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
+    if not is_mobile:
+      header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
 
     page = pn.template.BootstrapTemplate(favicon = 'img/favicon.ico', logo = 'img/torpedo_icon.jpg',
     header=header_row, busy_indicator = None, title = pageTitleMap[ls.TEAM_ID], header_background = '#ffffff')
@@ -815,11 +839,8 @@ def get_page_user(is_mobile = False):
 def get_mobile_page_user():
     return get_page_user(is_mobile = True)
 
-serve_adress = {}
-#serve_adress = {lsi.TORPEDO_TEAM_NAME : "/"}
-
 serve_port = int(lsi.loadArgument(2, default = 5003))
 #pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
-pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user, 'mobile' : get_mobile_page_user,'' : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
+pn.serve({ls.TEAM_NAME : get_page_user, 'mobile' : get_mobile_page_user,'' : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
 # %%
