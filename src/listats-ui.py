@@ -17,6 +17,9 @@ from bokeh.models.widgets import HTMLTemplateFormatter, NumberFormatter
 pn.extension(design='native')
 pn.extension('tabulator', css_files=[pn.io.resources.CSS_URLS['font-awesome']])
 
+js_files = {'listats': 'https://cdn.jsdelivr.net/gh/dmieter/listats/src/js/listats-ui.js'}
+#pn.extension(js_files=js_files)
+
 tTypes = ls.DF_TOURNAMENTS.type.unique()
 SHOW_ALL_TOURNAMENTS = 'Все турниры'
 tTypes = np.append([SHOW_ALL_TOURNAMENTS], tTypes)
@@ -729,7 +732,8 @@ width: 20px;
 
 import sys
 
-def get_page_user():
+
+def get_page_user(is_mobile = False):
     
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
@@ -766,23 +770,36 @@ def get_page_user():
     bound_tournaments_chart = pn.bind(getTournamentChart, type=select_type_widget, timePeriod = select_time_widget)
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
 
-    gspec = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
-    #gspec[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
-    gspec[0, :30] = pn.Row(pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style), bound_tournaments_chart, styles = box_empty_style_v)
-    gspec[1, :30] = pn.Row(
-                pn.Row(
-                    pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
-                    , styles = box_empty_style_h),
-                    pn.Row(
+    recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
+    tournamnet_widget = pn.Row(
+                            pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
+                        , styles = box_empty_style_h)
+    player_widget = pn.Row(
                         pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
-                        , styles = box_empty_style_h)  
-                  , styles = box_empty_style_v)
-    gspec[2, :30] = pn.Row(pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h), 
-                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Перформансу'), bound_performance_tab, styles = box_style), styles = box_empty_style_h),  
-                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Темпу'), bound_avscore_tab, styles = box_style), styles = box_empty_style_h), 
-                           pn.Row(pn.Column(getTitlePanel('Топ 100 по Очкам'), bound_totalscore_tab, styles = box_style), styles = box_empty_style_h)
-                           , styles = box_empty_style_v)
+                    , styles = box_empty_style_h)
+    
+    prizes_widget = pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h)
+    perf_widget = pn.Row(pn.Column(getTitlePanel('Топ 100 по Перформансу'), bound_performance_tab, styles = box_style), styles = box_empty_style_h)
+    temp_widget = pn.Row(pn.Column(getTitlePanel('Топ 100 по Темпу'), bound_avscore_tab, styles = box_style), styles = box_empty_style_h)
+    score_widget = pn.Row(pn.Column(getTitlePanel('Топ 100 по Очкам'), bound_totalscore_tab, styles = box_style), styles = box_empty_style_h)
 
+    if not is_mobile:
+      page_layout = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
+      #page_layout[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
+      page_layout[0, :30] = pn.Row(recent_tournaments_widget, bound_tournaments_chart, styles = box_empty_style_v)
+      page_layout[1, :30] = pn.Row(tournamnet_widget, player_widget, styles = box_empty_style_v)
+      page_layout[2, :30] = pn.Row(prizes_widget, perf_widget, temp_widget, score_widget, styles = box_empty_style_v)
+
+    else:
+        page_layout = pn.Column(
+              pn.Row(recent_tournaments_widget, styles = box_empty_style_v),
+              pn.Row(tournamnet_widget, styles = box_empty_style_v), 
+              pn.Row(player_widget, styles = box_empty_style_v), 
+              pn.Row(score_widget, styles = box_empty_style_v), 
+              pn.Row(prizes_widget, styles = box_empty_style_v), 
+              pn.Row(perf_widget, styles = box_empty_style_v), 
+              pn.Row(temp_widget, styles = box_empty_style_v)
+              , styles = background_style, sizing_mode = "scale_width")
 
     
     header_row = pn.Row(getTextPanel(''), select_type_widget, select_time_widget)
@@ -791,15 +808,18 @@ def get_page_user():
     page = pn.template.BootstrapTemplate(favicon = 'img/favicon.ico', logo = 'img/torpedo_icon.jpg',
     header=header_row, busy_indicator = None, title = pageTitleMap[ls.TEAM_ID], header_background = '#ffffff')
     page.config.raw_css.append(stylesheet_panel_title)
-    page.main.append(gspec)
+    page.main.append(page_layout)
     return page
 
 
+def get_mobile_page_user():
+    return get_page_user(is_mobile = True)
 
-#serve_adress = {lsi.TORPEDO_TEAM_NAME : "/"}
 serve_adress = {}
+#serve_adress = {lsi.TORPEDO_TEAM_NAME : "/"}
 
 serve_port = int(lsi.loadArgument(2, default = 5003))
-pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
+#pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
+pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user, 'mobile' : get_mobile_page_user, serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) + '-mobile' : get_mobile_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
 # %%
