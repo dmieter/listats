@@ -820,6 +820,6 @@ serve_adress = {}
 
 serve_port = int(lsi.loadArgument(2, default = 5003))
 #pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
-pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user, 'mobile' : get_mobile_page_user, serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) + '-mobile' : get_mobile_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
+pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user, 'mobile' : get_mobile_page_user,'' : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
 # %%
