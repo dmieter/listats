@@ -1,4 +1,4 @@
-function detectMob() {
+function isMobile() {
     const toMatch = [
         /Android/i,
         /webOS/i,
@@ -15,8 +15,7 @@ function detectMob() {
     });
 }
 
-is_mobile = detectMob();
-console.debug(is_mobile)
-if(is_mobile) {
+if(!window.location.href.toLowerCase().includes('/mobile') && isMobile()) {
+    
     window.location.replace('/mobile')
 }
