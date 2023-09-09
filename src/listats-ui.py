@@ -18,7 +18,7 @@ pn.extension(design='native')
 pn.extension('tabulator', css_files=[pn.io.resources.CSS_URLS['font-awesome']])
 
 js_files = {'listats': 'https://cdn.jsdelivr.net/gh/dmieter/listats/src/js/listats-ui.js'}
-#pn.extension(js_files=js_files)
+pn.extension(js_files=js_files)
 
 tTypes = ls.DF_TOURNAMENTS.type.unique()
 SHOW_ALL_TOURNAMENTS = 'Все турниры'
@@ -839,7 +839,7 @@ def get_page_user(is_mobile = False):
 def get_mobile_page_user():
     return get_page_user(is_mobile = True)
 
-serve_port = int(lsi.loadArgument(2, default = 5008))
+serve_port = int(lsi.loadArgument(2, default = 5003))
 #pn.serve({serve_adress.get(ls.TEAM_NAME, ls.TEAM_NAME) : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 pn.serve({ls.TEAM_NAME : get_page_user, 'mobile' : get_mobile_page_user,'' : get_page_user}, port=serve_port, title = pageTitleMap[ls.TEAM_ID], websocket_origin = '*')
 
