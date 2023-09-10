@@ -250,6 +250,7 @@ def getPrizesTab(type, timePeriod, existingTabulator):
         return pn.widgets.Tabulator(
           df[['Игрок', 'Призы', 'Всего']],
           widths={'Призы': 180},
+          text_align={'Всего': 'left'},
           layout='fit_data',
           show_index = False,
           disabled = True,
