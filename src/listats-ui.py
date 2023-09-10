@@ -217,14 +217,18 @@ def getRecentTournamentsTab(type, existingTabulator):
 
 def prepare_prizes_row(row):
     prizes_row = ''
+    total_value = 0
     if(row['1 место'] > 0):
         prizes_row += str(row['1 место']) + ' x ' + img_first_place + ' '
+        total_value = total_value + 10000*row['1 место']
     if(row['2 место'] > 0):
         prizes_row += str(row['2 место']) + ' x ' + img_second_place + ' '
+        total_value = total_value + 100*row['2 место']
     if(row['3 место'] > 0):
-        prizes_row += str(row['3 место']) + ' x ' + img_third_place + ' '    
+        prizes_row += str(row['3 место']) + ' x ' + img_third_place + ' '
+        total_value = total_value + row['3 место']
 
-    return prizes_row
+    return prepareSortingTag(total_value) + prizes_row
 
 
 def getPrizesTab(type, timePeriod, existingTabulator):
@@ -244,7 +248,7 @@ def getPrizesTab(type, timePeriod, existingTabulator):
         return existingTabulator
     else:
         return pn.widgets.Tabulator(
-          df[['Игрок', 'Призы']],
+          df[['Игрок', 'Призы', 'Всего']],
           widths={'Призы': 180},
           layout='fit_data',
           show_index = False,

@@ -232,10 +232,8 @@ def getPodiumsSimple(ttype, tsubtype, periodDays):
     g = p.groupby(['playerName'], as_index = False).agg(avPerformance = ('performance','mean'),
                                                         place_1 = ('place_1','sum'),
                                                         place_2 = ('place_2','sum'),
-                                                        place_3 = ('place_3','sum'))
-    
-
-    p['place_3'] = p.apply(lambda x: 1 if x['place'] == 3 else 0, axis=1)
+                                                        place_3 = ('place_3','sum'),
+                                                        podiums_cnt = ('place', 'count'))
     
     g.avPerformance = np.rint(g.avPerformance).astype('int')
     g = g.sort_values(by=['place_1', 'place_2', 'place_3', 'avPerformance', 'playerName'], ascending=[False, False, False, False, True])
@@ -243,7 +241,8 @@ def getPodiumsSimple(ttype, tsubtype, periodDays):
                             'avPerformance': 'Перф', 
                             'place_1': '1 место', 
                             'place_2': '2 место', 
-                            'place_3': '3 место'},
+                            'place_3': '3 место',
+                            'podiums_cnt': 'Всего'},
                             inplace = True)
     #g = g.set_index('Игрок')
 
