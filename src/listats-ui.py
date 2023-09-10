@@ -244,7 +244,7 @@ def getPrizesTab(type, timePeriod, existingTabulator):
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Игрок', 'Призы']]
+        existingTabulator.value = df[['Игрок', 'Призы', 'Всего']]
         return existingTabulator
     else:
         return pn.widgets.Tabulator(
