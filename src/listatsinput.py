@@ -18,11 +18,11 @@ ECOSYSTEM_TEAM_NAME = 'ECOSYSTEM'
 
 def setTorpedoBaseTeam():
     print('Setting TORPEDO as a base team')
-    return TORPEDO_TEAM_ID, TORPEDO_TEAM_NAME, 'TORPEDO_PLAYERS.pkl', 'TORPEDO_TOURNAMENTS.pkl'
+    return TORPEDO_TEAM_ID, TORPEDO_TEAM_NAME, 'TORPEDO_PLAYERS.pkl', 'TORPEDO_TOURNAMENTS.pkl', 'TORPEDO_ACHIEVMENTS.plk'
 
 def setEcosystemBaseTeam():
     print('Setting ECOSYSTEM as a base team')
-    return ECOSYSTEM_TEAM_ID, ECOSYSTEM_TEAM_NAME, 'ECOSYSTEM_PLAYERS.pkl', 'ECOSYSTEM_TOURNAMENTS.pkl'    
+    return ECOSYSTEM_TEAM_ID, ECOSYSTEM_TEAM_NAME, 'ECOSYSTEM_PLAYERS.pkl', 'ECOSYSTEM_TOURNAMENTS.pkl', 'ECOSYSTEM_ACHIEVMENTS.plk'    
 
 def loadArgument(number, default):
     if len(sys.argv) > number:

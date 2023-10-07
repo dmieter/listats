@@ -4,18 +4,27 @@
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+import pickle
 
 from datetime import timedelta, date
 
 # %% GLOBALS
 import listatsinput as lsi
 
-TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName = lsi.loadInputTeam()
+TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName, dictAchivementsFile = lsi.loadInputTeam()
 
 #dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
 #dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
 #dfPlayersFileName = 'ECOSYSTEM_PLAYERS.pkl'
 #dfTournamentsFileName = 'ECOSYSTEM_TOURNAMENTS.pkl'
+
+def loadPickle(filename):
+    with open(filename, 'rb') as handle:
+        return pickle.load(handle)
+    
+def savePickle(filename, object):
+    with open(filename, 'wb') as handle:
+        pickle.dump(object, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def loadPlayersDataframe():
     return pd.read_pickle(dfPlayersFileName)
@@ -31,16 +40,20 @@ def retrieveType(tName):
         return 'Bundesliga'
     elif('Mega A'.lower() in tName.lower()):  
         return 'Mega'
+    elif('MGL ОНЛАЙН ШАТРЫН ЛИГ'.lower() in tName.lower()):  
+        return 'MGL ШАТРЫН ЛИГ'
+    elif('Battle elite'.lower() in tName.lower()):  
+        return 'Battle Elite'
     elif('dark master'.lower() in tName.lower()):  
         return 'Dark Master'
-    elif('МАРАФОН Стенка'.lower() in tName.lower()):  
-        return 'МАРАФОН Стенка'
     elif('FGMClub Mega'.lower() in tName.lower()):  
         return 'FGMClub Mega'
     elif('Rapid League'.lower() in tName.lower()):  
         return 'Rapid League'
     elif('TPR'.lower() in tName.lower()):  
         return 'TPR CHAMPIONSHIP'
+    elif('Friendly team fight'.lower() in tName.lower()):  
+        return 'Friendly Team Fights'
     elif('Chess960 SuperBlitz'.lower() in tName.lower()):  
         return 'Chess960 SuperBlitz'
     elif('Российский Шахматный Марафон'.lower() in tName.lower()):  
@@ -62,7 +75,7 @@ def loadPandasData():
 
     return tournaments, players
 
-DF_TOURNAMENTS, DF_PLAYERS = loadPandasData()    
+DF_TOURNAMENTS, DF_PLAYERS = loadPandasData()
 
 # %% HELP FUNCTIONS
 from datetime import datetime
