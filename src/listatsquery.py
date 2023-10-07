@@ -11,7 +11,7 @@ from datetime import timedelta, date
 # %% GLOBALS
 import listatsinput as lsi
 
-TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName, dictAchivementsFile = lsi.loadInputTeam()
+TEAM_ID, TEAM_NAME, dfPlayersFileName, dfTournamentsFileName = lsi.loadInputTeam()
 
 #dfPlayersFileName = 'TORPEDO_PLAYERS.pkl'
 #dfTournamentsFileName = 'TORPEDO_TOURNAMENTS.pkl'
