@@ -38,18 +38,28 @@ def retrieveType(tName):
         return 'Indonesia'
     elif('Bundesliga'.lower() in tName.lower() or 'Lichess Liga '.lower() in tName.lower()):
         return 'Bundesliga'
-    elif('Mega A'.lower() in tName.lower()):  
-        return 'Mega'
     elif('MGL ОНЛАЙН ШАТРЫН ЛИГ'.lower() in tName.lower()):  
         return 'MGL ШАТРЫН ЛИГ'
+    elif('Lichess Mega'.lower() in tName.lower()):  
+        return 'Lichess Mega'
+    elif('Champions league'.lower() in tName.lower()):  
+        return 'Champions league'
+    elif('Friendly team fights'.lower() in tName.lower()):  
+        return 'Friendly team fights'
+    elif('Lunch League'.lower() in tName.lower()):  
+        return 'Lunch League'
+    elif('LIGA IBERA'.lower() in tName.lower()):  
+        return 'LIGA IBERA'
     elif('Battle elite'.lower() in tName.lower()):  
         return 'Battle Elite'
+    elif('Liga América'.lower() in tName.lower()):  
+        return 'Liga América'
     elif('dark master'.lower() in tName.lower()):  
         return 'Dark Master'
-    elif('FGMClub Mega'.lower() in tName.lower()):  
-        return 'FGMClub Mega'
     elif('Rapid League'.lower() in tName.lower()):  
         return 'Rapid League'
+    elif('Лига Суперблица'.lower() in tName.lower()):  
+        return 'Лига Суперблица'
     elif('TPR'.lower() in tName.lower()):  
         return 'TPR CHAMPIONSHIP'
     elif('Friendly team fight'.lower() in tName.lower()):  

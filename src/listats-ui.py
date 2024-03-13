@@ -167,7 +167,7 @@ def getRecentTournamentsTab(type, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
         type = None
     
-    df = ls.getRecentTournaments(type, None, None, 12)    
+    df = ls.getRecentTournaments(type, None, None, 100)    
 
     df.teamPlace = pd.to_numeric(df.teamPlace)
     df['teamPlace'] = df.apply(lambda x: prepare_sorted_place_value(x, field = 'teamPlace'), axis=1)
