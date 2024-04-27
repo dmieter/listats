@@ -60,8 +60,6 @@ def loadJson(url):
 def loadJsonList(url):
     req = Request(url)
     req.add_header('x-requested-with', 'XMLHttpRequest')
-    req.add_header('Content-Type', 'application/json;charset=UTF-8')
-    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)')
     response = urlopen(req).read().decode('utf-8')
 
     list_json = []
@@ -227,6 +225,11 @@ def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
     tournamentData = loadTournamentJson(tournamentId)
     
     place, score, isIndividual = loadTournamentTeamResult(tournamentId, teamId)
+
+    if 'teamBattle' in tournamentData:
+        leadersNum = tournamentData['teamBattle']['nbLeaders']
+    else:
+        leadersNum = 0
     
     tournamentSummary = {'index': tournamentId,
                          'id': tournamentId, 
@@ -236,6 +239,8 @@ def getTournamentInfo(tournamentId, tournamentType, tournamentSubtype, teamId):
                          'date':  tournamentData['startsAt'],
                          'finishTime': calcFinishTime(tournamentData),
                          'timeControl': decodeTimeControl(tournamentData),
+                         'timeType' : tournamentData['perf']['name'],
+                         'leadersNum' : leadersNum,
                          'teamPlace': place,
                          'teamScore': score
                          }

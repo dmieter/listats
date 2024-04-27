@@ -237,6 +237,38 @@ def getPlayersRecentParticipations(ttype, tsubtype, periodDays):
 #    f.write(getPlayersRecentParticipations(None, None, None).to_string(header=True, index=False))
 
 
+def calcInternalRatingForRow(row):
+    leader_score = row.leadersNum - row.innerPlace + 1
+    if(row.innerPlace <= 3):
+        leader_score = leader_score + 3 - row.innerPlace + 1
+    if(row.place <= 3):    
+        leader_score = leader_score + 3 - row.place + 1
+
+    return leader_score
+
+def getInternalRating(start_date, end_date, time_type):
+    t = DF_TOURNAMENTS
+    if time_type:
+        t = t[t.timeType == time_type]
+    #start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    #end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+    t = t[(t.date.dt.date >= start_date) & (t.date.dt.date <= end_date)]
+
+    p = getCorrespondingPlayers(t)
+    p = removeTitlesInfo(p)
+
+    p = p.sort_values(['id', 'place'])
+    p['innerPlace'] = p.groupby('id').cumcount() + 1
+    p = p[(p.leadersNum == 0) | (p.leadersNum >= p.innerPlace)]
+    p['internalRating'] = p.apply(lambda x: calcInternalRatingForRow(x), axis=1)
+    g = p.groupby(['playerName'], as_index = False).agg(internalRating = ('internalRating','sum'),
+                                                        tournamentsNum = ('innerPlace','count'),
+                                                        avRating = ('internalRating','mean'),
+                                                        avPlace = ('innerPlace','mean'))
+    
+    g = g.sort_values(by=['internalRating', 'avPlace', 'tournamentsNum'], ascending=[False, False, False])
+
+    return g
 
 
 def getPodiumsSimple(ttype, tsubtype, periodDays):

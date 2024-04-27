@@ -25,6 +25,11 @@ SHOW_ALL_TOURNAMENTS = 'Все турниры'
 tTypes = np.append([SHOW_ALL_TOURNAMENTS], tTypes)
 tTypes = tTypes[tTypes != None]
 
+controlTypes = ls.DF_TOURNAMENTS.timeType.dropna().unique()
+controlTypes = np.append([SHOW_ALL_TOURNAMENTS], controlTypes)
+controlTypes = controlTypes[controlTypes != None]
+
+
 class playerTournamentTypes:
   PLAYER_TOURNAMENTS_ALL = 'Все'
   PLAYER_TOURNAMENTS_BEST = 'Лучшие'
@@ -208,7 +213,7 @@ def getRecentTournamentsTab(type, existingTabulator):
           disabled = True, 
           #theme='semantic-ui', 
           show_index = False,
-          height = 400,
+          height = 440,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -308,6 +313,45 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
     return indicatorsTab, df
 
 
+def getInternalRatingTab(existingTabulator, start_date, end_date, control_type):
+    if control_type == SHOW_ALL_TOURNAMENTS:
+        control_type = None
+
+    df = ls.getInternalRating(start_date.date(), end_date.date(), control_type)
+
+    df.rename(columns={'playerName': 'Игрок', 
+                            'internalRating': 'Рейтинг', 
+                            'avPlace': 'Место', 
+                            'avRating': 'Средний', 
+                            'tournamentsNum': 'Турниры'},
+                            inplace = True)       
+
+    tab_formatters = {
+      'Рейтинг': NumberFormatter(format='0'),
+      'Турниры': NumberFormatter(format='0'),
+      'Место': NumberFormatter(format='0.0'),
+      'Средний': NumberFormatter(format='0.0')
+    }
+
+
+    df['#'] = df.reset_index().index + 1
+    tab_data = df[['#', 'Игрок', 'Рейтинг', 'Турниры']]
+
+    if existingTabulator:
+        existingTabulator.value = df[['#', 'Игрок', 'Рейтинг', 'Турниры']]
+        return existingTabulator
+    else:     
+        return pn.widgets.Tabulator(
+          tab_data,
+          widths={'Игрок': 150},
+          layout='fit_data',
+          show_index = False,
+          disabled = True,
+          height = 350,
+          stylesheets=[stylesheet_tabulator_small],
+          formatters=tab_formatters
+        )
+
 def getTotalScoreTab(type, timePeriod, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
         type = None
@@ -403,7 +447,7 @@ def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTab
       case _:
         df = ls.findPlayerBestTournaments(name, type, None, timeMap[timePeriod])
 
-    df = df[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id']]        
+    df = df[['place', 'eventName', 'date', 'games', 'score', 'performance', 'id', 'timeControl']]
 
     df.place = pd.to_numeric(df.place)
     df['place'] = df.apply(lambda x: prepare_sorted_place_value(x), axis=1)          
@@ -416,7 +460,8 @@ def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTab
                        'place': 'Место',
                        'games': 'Игры',
                        'score': 'Очки',
-                       'performance': 'Перф'},
+                       'performance': 'Перф',
+                       'timeControl' : 'Часы'},
                             inplace = True)       
 
     tab_formatters = {
@@ -427,11 +472,11 @@ def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTab
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']]
+        existingTabulator.value = df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата', 'Часы']]
         tabulator = existingTabulator
     else:    
         tabulator = pn.widgets.Tabulator(
-          df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']],
+          df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата', 'Часы']],
           widths={'Турнир': 200},
           layout='fit_data',
           show_index = False,
@@ -457,6 +502,18 @@ class TabulatorRecentTournaments:
     def click(self, event):
         self.tournament_widget.value = str(self.df.iloc[event.row]["id"])
 
+class TabulatorInternalRating:
+    def __init__(self, player_name_widget):
+        self.player_name_widget = player_name_widget
+        self.tabulator_object = None
+
+    def getData(self, date_range, control_type):
+        self.tabulator_object = getInternalRatingTab(self.tabulator_object, date_range[0], date_range[1], control_type)
+        self.tabulator_object.on_click(self.click)
+        return self.tabulator_object
+
+    def click(self, event):
+        self.player_name_widget.value = str(self.tabulator_object.value.iloc[event.row]["Игрок"])
 
 class TabulatorPlayerPodiums:
     def __init__(self, player_name_widget):
@@ -535,7 +592,7 @@ def getPlayerPieChart(name, timePeriod):
     g = p.groupby(['type'], 
                     as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
     
-    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 550)
+    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 530)
     fig.update_layout(font=dict(
           family="Roboto"
         )
@@ -554,7 +611,7 @@ def getTournamentChart(type, timePeriod):
         title = 'Bundesliga '  # fix for strange error when Все switches to Bundesliga
 
 
-    t = ls.getFilteredTournaments(type, None, timeMap[timePeriod]).sort_values(by='date', ascending = False).head(2000)
+    t = ls.getFilteredTournaments(type, None, timeMap[timePeriod]).sort_values(by='date', ascending = False).head(60)
     t = t[t.teamScore > 0]
     t.teamPlace = pd.to_numeric(t.teamPlace)
     
@@ -760,7 +817,15 @@ def get_page_user(is_mobile = False):
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
+    select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 130)
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
+    daterange_slider_widget = pn.widgets.DateRangeSlider(
+        name='Период',
+        start=datetime(2024, 1, 1), end = datetime.today(),
+        value=(datetime(2024, 4, 1), datetime.today()),
+        step=1,
+        width = 350
+    )
     name_input_widget = pn.widgets.TextInput(value=ls.getRandomPlayer(), width = 200)
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
     select_player_table_type_widget = pn.widgets.RadioButtonGroup(options=[playerTournamentTypes.PLAYER_TOURNAMENTS_BEST, playerTournamentTypes.PLAYER_TOURNAMENTS_PRIZES, playerTournamentTypes.PLAYER_TOURNAMENTS_ALL], button_type='light', value = playerTournamentTypes.PLAYER_TOURNAMENTS_BEST)
@@ -771,6 +836,9 @@ def get_page_user(is_mobile = False):
     tabulatorPrizes = TabulatorPlayerPodiums(name_input_widget)
     bound_prizes_tab = pn.bind(tabulatorPrizes.getData, type=select_type_widget, timePeriod = select_time_widget)
     
+    tabulatorInternalRating = TabulatorInternalRating(name_input_widget)
+    bound_internal_rating_tab = pn.bind(tabulatorInternalRating.getData, date_range = daterange_slider_widget, control_type = select_controltype_widget)
+
     tabulatorTournaments = TabulatorRecentTournaments(tournament_input_widget)
     bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, type=select_type_widget)
 
@@ -793,6 +861,7 @@ def get_page_user(is_mobile = False):
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
 
     recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
+    internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget ,daterange_slider_widget, bound_internal_rating_tab, styles = box_style), styles = box_empty_style)
     tournamnet_widget = pn.Row(
                             pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
                         , styles = box_empty_style_h)
@@ -814,7 +883,7 @@ def get_page_user(is_mobile = False):
     if not is_mobile:
       page_layout = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
       #page_layout[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
-      page_layout[0, :30] = pn.Row(recent_tournaments_widget, bound_tournaments_chart, styles = box_empty_style_v)
+      page_layout[0, :30] = pn.Row(recent_tournaments_widget, internal_rating_widget, bound_tournaments_chart, styles = box_empty_style_v)
       page_layout[1, :30] = pn.Row(tournamnet_widget, player_widget, styles = box_empty_style_v)
       page_layout[2, :30] = pn.Row(prizes_widget, perf_widget, temp_widget, score_widget, styles = box_empty_style_v)
 
