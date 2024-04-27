@@ -60,6 +60,8 @@ def loadJson(url):
 def loadJsonList(url):
     req = Request(url)
     req.add_header('x-requested-with', 'XMLHttpRequest')
+    req.add_header('Content-Type', 'application/json;charset=UTF-8')
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)')
     response = urlopen(req).read().decode('utf-8')
 
     list_json = []
