@@ -238,11 +238,19 @@ def getPlayersRecentParticipations(ttype, tsubtype, periodDays):
 
 
 def calcInternalRatingForRow(row):
-    leader_score = row.leadersNum - row.innerPlace + 1
+
+    if row.score == 0:
+        return 0
+
+    leadersNum = row.leadersNum if row.leadersNum > 0 else row.playersNum # to check for inner tournaments with 0 leaders
+    
+    leader_score = min(leadersNum, row.playersNum) - row.innerPlace + 1     # i.e. if we have players < leadersNum then calc based on players num
     if(row.innerPlace <= 3):
         leader_score = leader_score + 3 - row.innerPlace + 1
     if(row.place <= 3):    
         leader_score = leader_score + 3 - row.place + 1
+
+    #print("For player {} with inner place {}, total place {}, leaders {} and players {} score is: {}".format(row.playerName, row.innerPlace, row.place, row.leadersNum, row.playersNum, leader_score))
 
     return leader_score
 
@@ -258,7 +266,9 @@ def getInternalRating(start_date, end_date, time_type):
     p = removeTitlesInfo(p)
 
     p = p.sort_values(['id', 'place'])
-    p['innerPlace'] = p.groupby('id').cumcount() + 1
+    g = p.groupby('id')
+    p['innerPlace'] = g.cumcount() + 1
+    p['playersNum'] = g['id'].transform('count')
     p = p[(p.leadersNum == 0) | (p.leadersNum >= p.innerPlace)]
     p['internalRating'] = p.apply(lambda x: calcInternalRatingForRow(x), axis=1)
     g = p.groupby(['playerName'], as_index = False).agg(internalRating = ('internalRating','sum'),

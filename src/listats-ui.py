@@ -889,6 +889,7 @@ def get_page_user(is_mobile = False):
 
     else:
         page_layout = pn.Column(
+              pn.Row(internal_rating_widget, styles = box_empty_style_v),
               pn.Row(recent_tournaments_widget, styles = box_empty_style_v),
               pn.Row(tournamnet_widget, styles = box_empty_style_v), 
               pn.Row(player_widget, styles = box_empty_style_v), 
