@@ -821,8 +821,8 @@ def get_page_user(is_mobile = False):
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
     daterange_slider_widget = pn.widgets.DateRangeSlider(
         name='Период',
-        start=datetime(2024, 4, 26), end = datetime.today(),
-        value=(datetime(2024, 4, 26), datetime.today()),
+        start=datetime(2024, 5, 1), end = datetime.today(),
+        value=(datetime(2024, 5, 1), datetime.today()),
         step=1,
         width = 350
     )

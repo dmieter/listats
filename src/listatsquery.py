@@ -251,6 +251,8 @@ def calcInternalRatingForRow(row):
         leader_score = leader_score + 3 - row.place + 1
 
     #print("For player {} with inner place {}, total place {}, leaders {} and players {} score is: {}".format(row.playerName, row.innerPlace, row.place, row.leadersNum, row.playersNum, leader_score))
+    if 'Bundesliga'.lower() in row.eventName.lower():
+        leader_score = leader_score * 2
 
     return leader_score
 
@@ -270,7 +272,10 @@ def getInternalRating(start_date, end_date, time_type):
     p['innerPlace'] = g.cumcount() + 1
     p['playersNum'] = g['id'].transform('count')
     p = p[(p.leadersNum == 0) | (p.leadersNum >= p.innerPlace)]
-    p['internalRating'] = p.apply(lambda x: calcInternalRatingForRow(x), axis=1)
+    if len(p) > 0:
+        p['internalRating'] = p.apply(lambda x: calcInternalRatingForRow(x), axis=1)
+    else:
+        p['internalRating'] = 0
     g = p.groupby(['playerName'], as_index = False).agg(internalRating = ('internalRating','sum'),
                                                         tournamentsNum = ('innerPlace','count'),
                                                         avRating = ('internalRating','mean'),
