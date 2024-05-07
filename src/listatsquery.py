@@ -242,7 +242,7 @@ def calcInternalRatingForRow(row):
     if row.score == 0:
         return 0
 
-    leadersNum = row.leadersNum if row.leadersNum > 0 else row.playersNum # to check for inner tournaments with 0 leaders
+    leadersNum = row.leadersNum if row.leadersNum > 0 else 10 # for inner tournaments with 0 leaders we default to 10 leaders
     
     leader_score = min(leadersNum, row.playersNum) - row.innerPlace + 1     # i.e. if we have players < leadersNum then calc based on players num
     if(row.innerPlace <= 3):
