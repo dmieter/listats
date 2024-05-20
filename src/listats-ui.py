@@ -213,7 +213,7 @@ def getRecentTournamentsTab(type, existingTabulator):
           disabled = True, 
           #theme='semantic-ui', 
           show_index = False,
-          height = 440,
+          height = 476,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -312,6 +312,22 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
 
     return indicatorsTab, df
 
+from io import StringIO
+def createInternalRatingFile(date_range, control_type):
+    df = ls.getInternalRating(date_range[0].date(), date_range[1].date(), control_type)
+
+    df.rename(columns={'playerName': 'Игрок', 
+                            'internalRating': 'Рейтинг', 
+                            'avPlace': 'Место', 
+                            'avRating': 'Средний', 
+                            'tournamentsNum': 'Турниры'},
+                            inplace = True) 
+    
+    sio = StringIO()
+    df.to_csv(sio)
+    sio.seek(0)
+    return sio
+    
 
 def getInternalRatingTab(existingTabulator, start_date, end_date, control_type):
     if control_type == SHOW_ALL_TOURNAMENTS:
@@ -838,6 +854,7 @@ def get_page_user(is_mobile = False):
     
     tabulatorInternalRating = TabulatorInternalRating(name_input_widget)
     bound_internal_rating_tab = pn.bind(tabulatorInternalRating.getData, date_range = daterange_slider_widget, control_type = select_controltype_widget)
+    internal_rating_download_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFile, daterange_slider_widget, select_controltype_widget), filename='internal_rating.csv', button_type='success', label = 'Скачать CSV')
 
     tabulatorTournaments = TabulatorRecentTournaments(tournament_input_widget)
     bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, type=select_type_widget)
@@ -861,7 +878,7 @@ def get_page_user(is_mobile = False):
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
 
     recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
-    internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget ,daterange_slider_widget, bound_internal_rating_tab, styles = box_style), styles = box_empty_style)
+    internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget ,daterange_slider_widget, bound_internal_rating_tab, internal_rating_download_widget, styles = box_style), styles = box_empty_style)
     tournamnet_widget = pn.Row(
                             pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
                         , styles = box_empty_style_h)
