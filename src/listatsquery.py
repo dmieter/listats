@@ -68,7 +68,7 @@ def retrieveType(tName):
         return 'Chess960 SuperBlitz'
     elif('Российский Шахматный Марафон'.lower() in tName.lower()):  
         return 'Российский Шахматный Марафон'
-    elif('Экосистема'.lower() in tName.lower() or 'Ecosystem'.lower() in tName.lower()):  
+    elif('Экосистема'.lower() in tName.lower() or 'Ecosystem'.lower() in tName.lower() or ' ES '.lower() in tName.lower()):  
         return 'Экосистема Arena'
     else:
         np.nan 
