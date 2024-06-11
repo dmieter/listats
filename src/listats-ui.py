@@ -312,9 +312,14 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
 
     return indicatorsTab, df
 
+
 from io import StringIO
+from io import BytesIO
 def createInternalRatingFile(date_range, control_type):
-    df = ls.getInternalRating(date_range[0].date(), date_range[1].date(), control_type)
+    if control_type == SHOW_ALL_TOURNAMENTS:
+        control_type = None
+
+    df = ls.getInternalRating(date_range[0].date(), date_range[1].date(), control_type).head(150)
 
     df.rename(columns={'playerName': 'Игрок', 
                             'internalRating': 'Рейтинг', 
@@ -323,10 +328,16 @@ def createInternalRatingFile(date_range, control_type):
                             'tournamentsNum': 'Турниры'},
                             inplace = True) 
     
-    sio = StringIO()
-    df.to_csv(sio)
-    sio.seek(0)
-    return sio
+    #sio = StringIO()
+    #df.to_csv(sio)
+    #sio.seek(0)
+    #return sio
+
+    io_buffer = BytesIO()
+    df.to_excel(io_buffer, index=False)
+    io_buffer.seek(0)
+
+    return io_buffer
     
 
 def getInternalRatingTab(existingTabulator, start_date, end_date, control_type):
@@ -837,7 +848,7 @@ def get_page_user(is_mobile = False):
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
     daterange_slider_widget = pn.widgets.DateRangeSlider(
         name='Период',
-        start=datetime(2024, 5, 1), end = datetime.today(),
+        start=datetime(2023, 5, 1), end = datetime.today(),
         value=(datetime(2024, 5, 1), datetime.today()),
         step=1,
         width = 350
@@ -854,7 +865,7 @@ def get_page_user(is_mobile = False):
     
     tabulatorInternalRating = TabulatorInternalRating(name_input_widget)
     bound_internal_rating_tab = pn.bind(tabulatorInternalRating.getData, date_range = daterange_slider_widget, control_type = select_controltype_widget)
-    internal_rating_download_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFile, daterange_slider_widget, select_controltype_widget), filename='internal_rating.csv', button_type='success', label = 'Скачать CSV')
+    internal_rating_download_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFile, daterange_slider_widget, select_controltype_widget), filename='internal_rating.xlsx', button_type='success', label = 'Скачать Excel')
 
     tabulatorTournaments = TabulatorRecentTournaments(tournament_input_widget)
     bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, type=select_type_widget)
