@@ -182,7 +182,7 @@ def getTournamentPlayers(tournamentId):
 #print(getTournamentPlayers('hbVklgI1')) 
 
 def calcBestSimpleIndicator(indicator, ttype, tsubtype, periodDays, minimize = False):
-    df = getFilteredPlayers(ttype, tsubtype, periodDays, merge_names = True)
+    df = getFilteredPlayers(ttype, tsubtype, periodDays)
     return df.sort_values(by=[indicator], ascending=minimize)
 
 def getMostGamesPlayed(ttype, tsubtype, periodDays, maxNumber):
@@ -211,7 +211,7 @@ def getBestPerformances(ttype, tsubtype, periodDays, maxNumber):
     return calcBestSimpleIndicator('performance', ttype, tsubtype, periodDays, False).head(maxNumber)
 
 def getBestPlayerIndicator(playerName, indicator, ttype, tsubtype, periodDays, minimize = False):
-    p = getFilteredPlayersLower(ttype, tsubtype, periodDays, merge_names = True)
+    p = getFilteredPlayersLower(ttype, tsubtype, periodDays)
     p = p[p['lowerPlayerName'] == playerName.lower()]
     return p.sort_values(by=[indicator], ascending=minimize)
 
