@@ -110,24 +110,36 @@ def removeTitlesInfo(p):
        'NM_l', 'NM_w', 'WCM_d', 'WCM_l', 'WCM_w', 'WFM_d', 'WFM_l', 'WFM_w',
        'WGM_d', 'WGM_l', 'WGM_w', 'WIM_d', 'WIM_l', 'WIM_w'], errors='ignore')
 
-def getFilteredPlayers(ttype, tsubtype, periodDays, titles=False):
+def loadCSVtoNumpy(filename, delimiter=','):
+    df = pd.read_csv(filename, delimiter=delimiter)
+    return df
+
+def getFilteredPlayers(ttype, tsubtype, periodDays, titles=False, merge_names = False):
     t = getFilteredTournaments(ttype, tsubtype, periodDays)
-    p = getCorrespondingPlayers(t)
+    p = getCorrespondingPlayers(t, merge_names)
+    
     if(titles):
         return p
     else:
         return removeTitlesInfo(p)
-    
-def getFilteredPlayersLower(ttype, tsubtype, periodDays, titles=False):    
-    players = getFilteredPlayers(ttype, tsubtype, periodDays, titles)
+
+def getFilteredPlayersLower(ttype, tsubtype, periodDays, titles=False, merge_names = False):    
+    players = getFilteredPlayers(ttype, tsubtype, periodDays, titles, merge_names)
     players['lowerPlayerName'] = players.playerName.str.lower()
     return players
 
 
-def getCorrespondingPlayers(dfTournaments):
-    p = DF_PLAYERS.set_index('tournament')
-    m = dfTournaments.merge(p, left_on = 'id', right_on = 'tournament', how = 'left')    
-     
+def getCorrespondingPlayers(dfTournaments, merge_names = False):
+    p = DF_PLAYERS
+    
+    if merge_names:
+        d = loadCSVtoNumpy("names.csv")
+        p = p.merge(d, left_on=['playerName'], right_on=['secondName'], how='left')
+        p.loc[~(p.primaryName.isnull()) & (p.primaryName != p.playerName), 'playerName'] = p.primaryName 
+
+    p = p.set_index('tournament')
+    m = dfTournaments.merge(p, left_on = 'id', right_on = 'tournament', how = 'left')
+
     #print(m.columns)
     return m
 
@@ -170,16 +182,16 @@ def getTournamentPlayers(tournamentId):
 #print(getTournamentPlayers('hbVklgI1')) 
 
 def calcBestSimpleIndicator(indicator, ttype, tsubtype, periodDays, minimize = False):
-    df = getFilteredPlayers(ttype, tsubtype, periodDays)
+    df = getFilteredPlayers(ttype, tsubtype, periodDays, merge_names = True)
     return df.sort_values(by=[indicator], ascending=minimize)
 
 def getMostGamesPlayed(ttype, tsubtype, periodDays, maxNumber):
-    p = getFilteredPlayers(ttype, tsubtype, periodDays)
+    p = getFilteredPlayers(ttype, tsubtype, periodDays, merge_names=True)
     g = p.groupby(['playerName'], as_index = False).agg(totalGames = ('games','sum'))
     return g.sort_values(by=['totalGames'], ascending=False).head(maxNumber)
 
 def getMostPointsEarnedWithStats(ttype, tsubtype, periodDays, maxNumber):
-    p = getFilteredPlayers(ttype, tsubtype, periodDays)
+    p = getFilteredPlayers(ttype, tsubtype, periodDays, merge_names=True)
     
     
     g = p.groupby(['playerName'], as_index = False).agg(totalScore = ('score','sum'), 
@@ -199,7 +211,7 @@ def getBestPerformances(ttype, tsubtype, periodDays, maxNumber):
     return calcBestSimpleIndicator('performance', ttype, tsubtype, periodDays, False).head(maxNumber)
 
 def getBestPlayerIndicator(playerName, indicator, ttype, tsubtype, periodDays, minimize = False):
-    p = getFilteredPlayersLower(ttype, tsubtype, periodDays)
+    p = getFilteredPlayersLower(ttype, tsubtype, periodDays, merge_names = True)
     p = p[p['lowerPlayerName'] == playerName.lower()]
     return p.sort_values(by=[indicator], ascending=minimize)
 
@@ -264,7 +276,7 @@ def getInternalRating(start_date, end_date, time_type):
     #end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
     t = t[(t.date.dt.date >= start_date) & (t.date.dt.date <= end_date)]
 
-    p = getCorrespondingPlayers(t)
+    p = getCorrespondingPlayers(t, merge_names = True)
     p = removeTitlesInfo(p)
 
     p = p.sort_values(['id', 'place'])
@@ -287,7 +299,7 @@ def getInternalRating(start_date, end_date, time_type):
 
 
 def getPodiumsSimple(ttype, tsubtype, periodDays):
-    p = getFilteredPlayers(ttype, tsubtype, periodDays)
+    p = getFilteredPlayers(ttype, tsubtype, periodDays, merge_names=True)
     
     p = p[p['place'] <= 3]
     
