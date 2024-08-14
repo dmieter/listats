@@ -863,10 +863,11 @@ def get_page_user(is_mobile = False):
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
     select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 130)
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
+
     daterange_slider_widget = pn.widgets.DateRangeSlider(
         name='Период',
         start=datetime(2024, 5, 1), end = datetime.today(),
-        value=(datetime(2024, 5, 1), datetime.today()),
+        value=(datetime(2024, 8, 1) if ls.TEAM_NAME == lsi.TORPEDO_TEAM_NAME else datetime(2024, 5, 1), datetime.today()),
         step=1,
         width = 350
     )
