@@ -263,7 +263,7 @@ def calcInternalRatingForRow(row):
         leader_score = leader_score + 3 - row.place + 1
 
     #print("For player {} with inner place {}, total place {}, leaders {} and players {} score is: {}".format(row.playerName, row.innerPlace, row.place, row.leadersNum, row.playersNum, leader_score))
-    if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower():
+    if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'FGMClub Mega'.lower() in row.eventName.lower():
         leader_score = leader_score * 2
 
     return leader_score
