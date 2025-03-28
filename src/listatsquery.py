@@ -265,11 +265,14 @@ def calcInternalRatingForRow(row):
     
     #print("For player {} with inner place {}, total place {}, leaders {} and players {} score is: {}".format(row.playerName, row.innerPlace, row.place, row.leadersNum, row.playersNum, leader_score))
     
-    recalculation_date_1 = date(2025, 3, 1)
-    if row.date >= recalculation_date_1:
-        if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'FGMClub Mega'.lower() in row.eventName.lower():
-            leader_score = leader_score * 2
-    elif 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower():
+    #recalculation_date_1 = date(2025, 3, 1)
+    #if row.date >= recalculation_date_1:
+    #    if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'FGMClub Mega'.lower() in row.eventName.lower():
+    #        leader_score = leader_score * 2
+    #elif 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower():
+    #    leader_score = leader_score * 2
+
+    if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'FGMClub Mega'.lower() in row.eventName.lower():
         leader_score = leader_score * 2
 
 
