@@ -267,7 +267,7 @@ def calcInternalRatingForRow(row):
     
     recalculation_date_1 = date(2025, 3, 1)
     if row.date.date() >= recalculation_date_1:
-        if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'Lichess Mega'.lower() in row.eventName.lower():
+        if 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower() or 'Rapid League '.lower() in row.eventName.lower() or 'ROSliga'.lower() in row.eventName.lower() or 'R0Sliga'.lower() in row.eventName.lower() or 'Lichess Mega'.lower() in row.eventName.lower():
             leader_score = leader_score * 2
     elif 'Bundesliga'.lower() in row.eventName.lower() or 'Lichess Liga '.lower() in row.eventName.lower():
         leader_score = leader_score * 2
