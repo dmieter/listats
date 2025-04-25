@@ -7,6 +7,7 @@ import pandas as pd
 
 
 from datetime import datetime
+from datetime import date
 import panel as pn
 from panel.theme import Bootstrap, Material, Native, Fast 
 from bokeh.models.widgets import HTMLTemplateFormatter, NumberFormatter
@@ -315,11 +316,11 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
 
 from io import StringIO
 from io import BytesIO
-def createInternalRatingFileExcel(date_range, control_type):
+def createInternalRatingFileExcel(start_date, end_date, control_type):
     if control_type == SHOW_ALL_TOURNAMENTS:
         control_type = None
 
-    df = ls.getInternalRating(date_range[0].date(), date_range[1].date(), control_type).head(150)
+    df = ls.getInternalRating(start_date, end_date, control_type).head(150)
 
     df.rename(columns={'playerName': 'Игрок', 
                             'internalRating': 'Рейтинг', 
@@ -339,11 +340,11 @@ def createInternalRatingFileExcel(date_range, control_type):
 
     return io_buffer
     
-def createInternalRatingFileCsv(date_range, control_type):
+def createInternalRatingFileCsv(start_date, end_date, control_type):
     if control_type == SHOW_ALL_TOURNAMENTS:
         control_type = None
 
-    df = ls.getInternalRating(date_range[0].date(), date_range[1].date(), control_type).head(150)
+    df = ls.getInternalRating(start_date, end_date, control_type).head(150)
 
     df.rename(columns={'playerName': 'Игрок', 
                             'internalRating': 'Рейтинг', 
@@ -361,7 +362,7 @@ def getInternalRatingTab(existingTabulator, start_date, end_date, control_type):
     if control_type == SHOW_ALL_TOURNAMENTS:
         control_type = None
 
-    df = ls.getInternalRating(start_date.date(), end_date.date(), control_type)
+    df = ls.getInternalRating(start_date, end_date, control_type)
 
     df.rename(columns={'playerName': 'Игрок', 
                             'internalRating': 'Рейтинг', 
@@ -551,8 +552,8 @@ class TabulatorInternalRating:
         self.player_name_widget = player_name_widget
         self.tabulator_object = None
 
-    def getData(self, date_range, control_type):
-        self.tabulator_object = getInternalRatingTab(self.tabulator_object, date_range[0], date_range[1], control_type)
+    def getData(self, start_date, end_date, control_type):
+        self.tabulator_object = getInternalRatingTab(self.tabulator_object, start_date, end_date, control_type)
         self.tabulator_object.on_click(self.click)
         return self.tabulator_object
 
@@ -861,16 +862,12 @@ def get_page_user(is_mobile = False):
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
-    select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 130)
+    select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value="Blitz", width = 130)
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
 
-    daterange_slider_widget = pn.widgets.DateRangeSlider(
-        name='Период',
-        start=datetime(2024, 5, 1), end = datetime.today(),
-        value=(datetime(2024, 8, 1) if ls.TEAM_NAME == lsi.TORPEDO_TEAM_NAME else datetime(2024, 5, 1), datetime.today()),
-        step=1,
-        width = 350
-    )
+    date_picker_start = pn.widgets.DatePicker(name='Стартовая дата', value=date(2024, 8, 1), width = 100)
+    date_picker_end = pn.widgets.DatePicker(name='Конечная дата', value=date.today(), width = 100)
+
     name_input_widget = pn.widgets.TextInput(value=ls.getRandomPlayer(), width = 200)
     tournament_input_widget = pn.widgets.TextInput(name='Tournament Id', value=ls.getRandomTournament())
     select_player_table_type_widget = pn.widgets.RadioButtonGroup(options=[playerTournamentTypes.PLAYER_TOURNAMENTS_BEST, playerTournamentTypes.PLAYER_TOURNAMENTS_PRIZES, playerTournamentTypes.PLAYER_TOURNAMENTS_ALL], button_type='light', value = playerTournamentTypes.PLAYER_TOURNAMENTS_BEST)
@@ -882,9 +879,9 @@ def get_page_user(is_mobile = False):
     bound_prizes_tab = pn.bind(tabulatorPrizes.getData, type=select_type_widget, timePeriod = select_time_widget)
     
     tabulatorInternalRating = TabulatorInternalRating(name_input_widget)
-    bound_internal_rating_tab = pn.bind(tabulatorInternalRating.getData, date_range = daterange_slider_widget, control_type = select_controltype_widget)
-    internal_rating_download_excel_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileExcel, daterange_slider_widget, select_controltype_widget), filename='internal_rating.xlsx', button_type='success', label = 'Скачать Excel')
-    internal_rating_download_csv_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileCsv, daterange_slider_widget, select_controltype_widget), filename='internal_rating.csv', button_type='success', label = 'Скачать CSV')
+    bound_internal_rating_tab = pn.bind(tabulatorInternalRating.getData, start_date = date_picker_start, end_date = date_picker_end, control_type = select_controltype_widget)
+    internal_rating_download_excel_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileExcel, date_picker_start, date_picker_end, select_controltype_widget), filename='internal_rating.xlsx', button_type='success', label = 'Скачать Excel')
+    internal_rating_download_csv_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileCsv, date_picker_start, date_picker_end, select_controltype_widget), filename='internal_rating.csv', button_type='success', label = 'Скачать CSV')
 
     tabulatorTournaments = TabulatorRecentTournaments(tournament_input_widget)
     bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, type=select_type_widget)
@@ -908,7 +905,7 @@ def get_page_user(is_mobile = False):
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
 
     recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
-    internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget ,daterange_slider_widget, bound_internal_rating_tab, pn.Row(internal_rating_download_excel_widget, internal_rating_download_csv_widget), styles = box_style), styles = box_empty_style)
+    internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget, pn.Row(date_picker_start, date_picker_end), bound_internal_rating_tab, pn.Row(internal_rating_download_excel_widget, internal_rating_download_csv_widget), styles = box_style), styles = box_empty_style)
     tournamnet_widget = pn.Row(
                             pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
                         , styles = box_empty_style_h)
