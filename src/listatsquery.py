@@ -34,8 +34,8 @@ def loadTournamentsDataframe():
 
 
 def retrieveType(tName):
-    if('Indonesia'.lower() in tName.lower()):
-        return 'Indonesia'
+    if('community wa-WTL'.lower() in tName.lower()):
+        return 'Community WA-WTL'
     elif('Bundesliga'.lower() in tName.lower() or 'Lichess Liga '.lower() in tName.lower()):
         return 'Bundesliga'
     elif('MGL ОНЛАЙН ШАТРЫН ЛИГ'.lower() in tName.lower()):  
@@ -48,8 +48,8 @@ def retrieveType(tName):
         return 'Friendly team fights'
     elif('Lunch League'.lower() in tName.lower()):  
         return 'Lunch League'
-    elif('LIGA IBERA'.lower() in tName.lower()):  
-        return 'LIGA IBERA'
+    elif('Лига Суперблица'.lower() in tName.lower()):  
+        return 'Лига Суперблица'
     elif('Battle elite'.lower() in tName.lower()):  
         return 'Battle Elite'
     elif('Liga América'.lower() in tName.lower()):  
@@ -60,8 +60,8 @@ def retrieveType(tName):
         return 'Rapid League'
     elif('Лига Суперблица'.lower() in tName.lower()):  
         return 'Лига Суперблица'
-    elif('TPR'.lower() in tName.lower()):  
-        return 'TPR CHAMPIONSHIP'
+    elif('TPR'.lower() in tName.lower() or 'LMAO '.lower() in tName.lower()):  
+        return 'LAMO CHAMPIONSHIP'
     elif('Friendly team fight'.lower() in tName.lower()):  
         return 'Friendly Team Fights'
     elif('Chess960 SuperBlitz'.lower() in tName.lower()):  
