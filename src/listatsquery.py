@@ -61,7 +61,7 @@ def retrieveType(tName):
     elif('Лига Суперблица'.lower() in tName.lower()):  
         return 'Лига Суперблица'
     elif('TPR'.lower() in tName.lower() or 'LMAO '.lower() in tName.lower()):  
-        return 'LAMO CHAMPIONSHIP'
+        return 'LMAO CHAMPIONSHIP'
     elif('Friendly team fight'.lower() in tName.lower()):  
         return 'Friendly Team Fights'
     elif('Chess960 SuperBlitz'.lower() in tName.lower()):  
