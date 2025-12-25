@@ -31,6 +31,10 @@ controlTypes = np.append([SHOW_ALL_TOURNAMENTS], controlTypes)
 controlTypes = controlTypes[controlTypes != None]
 
 
+class TournamentsTypes:
+  TOURNAMENTS_RECENT = 'Недавние'
+  TOURNAMENTS_BEST = 'Лучшие'
+
 class playerTournamentTypes:
   PLAYER_TOURNAMENTS_ALL = 'Все'
   PLAYER_TOURNAMENTS_BEST = 'Лучшие'
@@ -49,14 +53,20 @@ pageTitleMap = {lsi.TORPEDO_TEAM_ID : 'ШК Торпедо Москва', lsi.EC
 # %% STYLES
 
 box_style = {'background-color': '#FFFFFF','border-radius': '5px','padding': '10px','box-shadow': '5px 5px 5px #bcbcbc'}
-box_empty_style = {'padding-top': '15px', 'padding-left': '15px'}
+box_empty_style = {'padding-top': '10px', 'padding-left': '15px'}
 box_empty_style_small = {'padding-top': '5px', 'padding-left': '5px'}
 box_empty_style_h = {'padding-left': '15px'}
-box_empty_style_v = {'padding-bottom': '25px'}
+box_empty_style_lr = {'padding-left': '15px', 'padding-right': '15px'}
+box_empty_style_v = {'padding-bottom': '15px'}
 font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
 img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
+img_xmas_year = '<img src="https://w7.pngwing.com/pngs/325/960/png-transparent-text-2026-2026-new-year-celebration-illustration.png" height="60">'
+img_xmas_long = '<img src="https://fort-boyard-spb.ru/img/25980002.png" height="60">'
+img_xmas_balls = '<img src="https://i.pinimg.com/originals/2e/98/43/2e9843381332e307d0a8adbb6cbf8485.png" height="80">'
+img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
+
 img_first_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
 img_second_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-silver-1.svg" height="20">'
 img_third_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-bronze-2.svg" height="20">'
@@ -169,11 +179,19 @@ def prepare_sorted_place_value(row, field = 'place'):
     return prepareSortingTag(place) + img
     
 
-def getRecentTournamentsTab(type, existingTabulator):
+def getRecentTournamentsTab(type, selectType, existingTabulator):
     if(type == SHOW_ALL_TOURNAMENTS):
         type = None
     
-    df = ls.getRecentTournaments(type, None, None, 100)    
+    if(selectType == TournamentsTypes.TOURNAMENTS_RECENT):
+      df = ls.getRecentTournaments(type, None, None, 100)    
+    else:
+      df = ls.getRecentTournaments(type, None, None, None)
+      df = df[df.cntPlayers >= 10]
+      df_perf = df.nlargest(20, 'teamScore')
+      df_score = df.nlargest(5, 'avPerformance')
+      df_place = df.nlargest(20, 'cntPlayers')
+      df = pd.concat([df_perf, df_score, df_place]).drop_duplicates().reset_index(drop=True).sort_values(by=['date'], ascending=False)
 
     df.teamPlace = pd.to_numeric(df.teamPlace)
     df['teamPlace'] = df.apply(lambda x: prepare_sorted_place_value(x, field = 'teamPlace'), axis=1)
@@ -200,21 +218,24 @@ def getRecentTournamentsTab(type, existingTabulator):
     tab_formatters = {
       'Турнир': HTMLTemplateFormatter(template = '<%= value %>'),
       'Дата': HTMLTemplateFormatter(template = '<%= value %>'),
-      'Место': HTMLTemplateFormatter(template = '<%= value %>')
+      'Место': HTMLTemplateFormatter(template = '<%= value %>'),
+      'Участники': HTMLTemplateFormatter(template = '<%= value %>'),
+      'Очки': HTMLTemplateFormatter(template = '<%= value %>'),
+      'Перф': HTMLTemplateFormatter(template = '<%= value %>')
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Турнир', 'Место', 'Часы', 'Дата']]
+        existingTabulator.value = df[['Турнир', 'Место', 'Часы', 'Дата', 'Участники', 'Очки', 'Перф']]
         tournamentsTab = existingTabulator
     else:     
         tournamentsTab = pn.widgets.Tabulator(
-          df[['Турнир', 'Место', 'Часы', 'Дата']],
+          df[['Турнир', 'Место', 'Часы', 'Дата', 'Участники', 'Очки', 'Перф']],
           widths={'Турнир': 280, 'Дата': 80},
           layout='fit_data_fill',
           disabled = True, 
           #theme='semantic-ui', 
           show_index = False,
-          height = 476,
+          height = 380,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -260,7 +281,7 @@ def getPrizesTab(type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 420,
+          height = 440,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -306,7 +327,7 @@ def getIndicatorsTab(indicatorDisplay, type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 420,
+          height = 440,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -392,7 +413,7 @@ def getInternalRatingTab(existingTabulator, start_date, end_date, control_type):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 350,
+          height = 330,
           stylesheets=[stylesheet_tabulator_small],
           formatters=tab_formatters
         )
@@ -430,7 +451,7 @@ def getTotalScoreTab(type, timePeriod, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 420,
+          height = 440,
           stylesheets=[stylesheet_tabulator_small],
           formatters = tab_formatters
         )
@@ -467,7 +488,7 @@ def getSingleTournamentTab(tournamentId, existingTabulator):
           layout='fit_data',
           show_index = False,
           disabled = True,
-          height = 300,
+          height = 290,
           stylesheets=[stylesheet_tabulator_small],
           formatters = tab_formatters
         )
@@ -517,11 +538,11 @@ def getSinglePlayerTournamentsTab(name, type, timePeriod, tableType, existingTab
     }
 
     if existingTabulator:
-        existingTabulator.value = df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата', 'Часы']]
+        existingTabulator.value = df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']]
         tabulator = existingTabulator
     else:    
         tabulator = pn.widgets.Tabulator(
-          df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата', 'Часы']],
+          df[['Турнир', 'Место', 'Игры', 'Очки', 'Перф', 'Дата']],
           widths={'Турнир': 200},
           layout='fit_data',
           show_index = False,
@@ -539,8 +560,8 @@ class TabulatorRecentTournaments:
         self.tournament_widget = tournament_widget
         self.tabulator_object = None
 
-    def getData(self, type):
-        self.tabulator_object, self.df = getRecentTournamentsTab(type, self.tabulator_object)
+    def getData(self, tournamentType, selectType):
+        self.tabulator_object, self.df = getRecentTournamentsTab(tournamentType, selectType, self.tabulator_object)
         self.tabulator_object.on_click(self.click)
         return self.tabulator_object
 
@@ -637,7 +658,7 @@ def getPlayerPieChart(name, timePeriod):
     g = p.groupby(['type'], 
                     as_index = False).agg(typeCount = ('type', 'count')).sort_values(by=['typeCount'], ascending=False)
     
-    fig = px.pie(g, values='typeCount', names='type', title='Турниры', width = 530)
+    fig = px.pie(g.head(10), values='typeCount', names='type', title='Турниры', width = 545)
     fig.update_layout(font=dict(
           family="Roboto"
         )
@@ -714,12 +735,21 @@ def getTextPanel(text):
 def getTitlePanel(title):
     return pn.pane.HTML('<h3>'+ title +'</h3>', align = 'center', styles = font_style)  
   
-def getTitlePanelWithLogo(title):
+def getTitlePanelWithLogo(title, logo):
     return pn.pane.HTML("""
 <table>
   <tr>
-    <td>""" + img_torpedo_logo + """</td>
+    <td>""" + logo + """</td>
     <td><h3>"""+ title +"""</h3></td>
+  </tr>
+</table>
+""", styles = font_style)  
+
+def getLogoPanel(logo):
+    return pn.pane.HTML("""
+<table>
+  <tr>
+    <td>""" + logo + """</td>
   </tr>
 </table>
 """, styles = font_style)  
@@ -784,8 +814,16 @@ def getPlayerInfoPanel(name, type, timePeriod):
     #print(info)
 
     html_pane = pn.pane.HTML("""
+<table>
+<tr>
+<td>
 <h2><a href='https://lichess.org/@/""" + name + """'>""" + name + """</a></h2>
 Активен: """ + str(info["lastActive"])[:-15]  + """
+</td>
+<td> <img src="https://www.freeiconspng.com/thumbs/christmas-hat-png/christmas-hat-png-15.png" height="75">
+</td>
+</tr>
+</table>
 <br><br>
 <table>
   <tr>
@@ -862,8 +900,9 @@ def get_page_user(is_mobile = False):
     ls.DF_TOURNAMENTS, ls.DF_PLAYERS = ls.loadPandasData()  
 
     select_type_widget = pn.widgets.Select(options=tTypes.tolist(),value=SHOW_ALL_TOURNAMENTS, width = 250)
-    select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value="Blitz", width = 130)
+    select_controltype_widget = pn.widgets.Select(options=controlTypes.tolist(),value="Блиц", width = 130)
     select_time_widget = pn.widgets.Select(options=timeTypes ,value=SHOW_WHOLE_TIME, width = 150)
+
 
     date_picker_start = pn.widgets.DatePicker(name='Стартовая дата', value=date(2024, 8, 1), width = 100)
     date_picker_end = pn.widgets.DatePicker(name='Конечная дата', value=date.today(), width = 100)
@@ -883,8 +922,9 @@ def get_page_user(is_mobile = False):
     internal_rating_download_excel_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileExcel, date_picker_start, date_picker_end, select_controltype_widget), filename='internal_rating.xlsx', button_type='success', label = 'Скачать Excel')
     internal_rating_download_csv_widget = pn.widgets.FileDownload(callback=pn.bind(createInternalRatingFileCsv, date_picker_start, date_picker_end, select_controltype_widget), filename='internal_rating.csv', button_type='success', label = 'Скачать CSV')
 
+    select_tournaments_type_widget = pn.widgets.RadioButtonGroup(options=[TournamentsTypes.TOURNAMENTS_RECENT, TournamentsTypes.TOURNAMENTS_BEST], button_type='light', value = TournamentsTypes.TOURNAMENTS_RECENT)
     tabulatorTournaments = TabulatorRecentTournaments(tournament_input_widget)
-    bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, type=select_type_widget)
+    bound_tournamemts_tab = pn.bind(tabulatorTournaments.getData, tournamentType=select_type_widget,  selectType=select_tournaments_type_widget)
 
     tabulatorPerformance = TabulatorIndicators(name_input_widget, tournament_input_widget, 'Перф')
     bound_performance_tab = pn.bind(tabulatorPerformance.getData, type=select_type_widget, timePeriod = select_time_widget)
@@ -904,20 +944,16 @@ def get_page_user(is_mobile = False):
     bound_tournaments_chart = pn.bind(getTournamentChart, type=select_type_widget, timePeriod = select_time_widget)
     bound_player_pie_chart = pn.bind(getPlayerPieChart, name=name_input_widget, timePeriod = select_time_widget)
 
-    recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Недавние Турниры'), bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
+    recent_tournaments_widget = pn.Column(pn.Column(getTitlePanel('Турниры'), select_tournaments_type_widget, bound_tournamemts_tab, styles = box_style), styles = box_empty_style)
     internal_rating_widget = pn.Column(pn.Column(getTitlePanel('Внутренний Рейтинг'), select_controltype_widget, pn.Row(date_picker_start, date_picker_end), bound_internal_rating_tab, pn.Row(internal_rating_download_excel_widget, internal_rating_download_csv_widget), styles = box_style), styles = box_empty_style)
-    tournamnet_widget = pn.Row(
-                            pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 514)
-                        , styles = box_empty_style_h)
+    tournamnet_widget = pn.Column(pn.Column(tournament_html_pane, bound_singletournament_tab, styles = box_style, height = 550)
+                                  ,styles = box_empty_style_h)
     
     if not is_mobile:
-        player_widget = pn.Row(
-                          pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style)
-                      , styles = box_empty_style_h)
+        player_widget =  pn.Row(pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), bound_player_pie_chart, styles = box_style, height = 550)
+                                ,styles = box_empty_style_lr)
     else:
-        player_widget = pn.Row(
-                          pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), styles = box_style)
-                      , styles = box_empty_style_h)
+        player_widget = pn.Row(pn.Column(name_input_widget, player_html_pane, select_player_table_type_widget, bound_singleprizes_tab), styles = box_style)
     
     prizes_widget = pn.Row(pn.Column(getTitlePanel('Призовые Места'), bound_prizes_tab, styles = box_style), styles = box_empty_style_h)
     perf_widget = pn.Row(pn.Column(getTitlePanel('Топ 100 по Перформансу'), bound_performance_tab, styles = box_style), styles = box_empty_style_h)
@@ -927,9 +963,10 @@ def get_page_user(is_mobile = False):
     if not is_mobile:
       page_layout = pn.GridSpec(ncols=30, nrows=30, sizing_mode = "scale_width", styles = background_style)
       #page_layout[0, :3] = pn.Row(getPageTitlePanel(), styles = box_style)
-      page_layout[0, :30] = pn.Row(recent_tournaments_widget, internal_rating_widget, bound_tournaments_chart, styles = box_empty_style_v)
-      page_layout[1, :30] = pn.Row(tournamnet_widget, player_widget, styles = box_empty_style_v)
-      page_layout[2, :30] = pn.Row(prizes_widget, perf_widget, temp_widget, score_widget, styles = box_empty_style_v)
+      page_layout[0, :30] = pn.Row(recent_tournaments_widget, bound_tournaments_chart)
+      page_layout[1, :30] = pn.Row(tournamnet_widget, player_widget)
+      page_layout[3, :30] = pn.Row(internal_rating_widget)
+      page_layout[2, :30] = pn.Row(prizes_widget, perf_widget, temp_widget, score_widget)
 
     else:
         page_layout = pn.Column(
@@ -944,12 +981,12 @@ def get_page_user(is_mobile = False):
               , styles = background_style, sizing_mode = "scale_width")
 
     
-    header_row = pn.Row(getTextPanel(''), select_type_widget, select_time_widget)
+    header_row = pn.Row(getLogoPanel(img_xmas_long), getLogoPanel(img_xmas_long), getTextPanel(''), select_type_widget, select_time_widget)
     if not is_mobile:
       header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
 
     page = pn.template.BootstrapTemplate(favicon = 'img/favicon.ico', logo = 'img/torpedo_icon.jpg',
-    header=header_row, busy_indicator = None, title = pageTitleMap[ls.TEAM_ID], header_background = '#ffffff')
+        header=header_row, busy_indicator = None, title = pageTitleMap[ls.TEAM_ID], header_background = '#ffffff')
     page.config.raw_css.append(stylesheet_panel_title)
     page.main.append(page_layout)
     return page
