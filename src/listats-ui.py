@@ -979,7 +979,7 @@ def get_page_user(is_mobile = False):
               , styles = background_style, sizing_mode = "scale_width")
 
     
-    header_row = pn.Row(getLogoPanel(img_2026_long), getLogoPanel(img_2026_long), getTextPanel(''), select_type_widget, select_time_widget)
+    header_row = pn.Row(getLogoPanel(img_2026_long), getTextPanel(''), select_type_widget, select_time_widget)
     if not is_mobile:
       header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
 
