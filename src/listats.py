@@ -23,14 +23,20 @@ pointsMap = {True : np.array([1, 0 ,0]), False : np.array([0 , 0, 1]), None : np
 
 
 def loadPlayersDataframe():
-    return pd.read_pickle(dfPlayersFileName)
+    try:
+        return pd.read_pickle(dfPlayersFileName)
+    except FileNotFoundError:
+        return pd.DataFrame()
 
 def savePlayersDataFrame():
     global DF_PLAYERS
     DF_PLAYERS.to_pickle(dfPlayersFileName)
     
 def loadTournamentsDataframe():
-    return pd.read_pickle(dfTournamentsFileName)
+    try:
+        return pd.read_pickle(dfTournamentsFileName)
+    except FileNotFoundError:
+        return pd.DataFrame()
 
 def saveTournamentsDataFrame():
     global DF_TOURNAMENTS
