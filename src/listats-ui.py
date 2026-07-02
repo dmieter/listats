@@ -62,9 +62,7 @@ font_style = {'font-family': 'Roboto'}
 background_style = {'background': '#edebe9 linear-gradient(to bottom, hsl(37, 12%, 84%), hsl(37, 10%, 92%) 116px) no-repeat'}
 
 img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
-img_xmas_year = '<img src="https://w7.pngwing.com/pngs/325/960/png-transparent-text-2026-2026-new-year-celebration-illustration.png" height="60">'
-img_xmas_long = '<img src="https://fort-boyard-spb.ru/img/25980002.png" height="60">'
-img_xmas_balls = '<img src="https://i.pinimg.com/originals/2e/98/43/2e9843381332e307d0a8adbb6cbf8485.png" height="80">'
+img_2026_long = '<img src="https://mir-cdn.behance.net/v1/rendition/project_modules/fs_webp/311322248703551.69f8192e67636.jpg" height="60">'
 img_torpedo_logo = '<img src="https://sun9-42.userapi.com/impg/gVBQcIoT3xffab0mzp4nJ2LQdkPa9pD2z6WlHA/UXDLG7-jK54.jpg?size=501x482&quality=95&sign=be3953ae84447d6a9d10486995f773e0&type=album" height="150">'
 
 img_first_place = '<img src="https://lichess1.org/assets/_BM89IP/images/trophy/lichess-massive.svg" height="20">'
@@ -820,7 +818,7 @@ def getPlayerInfoPanel(name, type, timePeriod):
 <h2><a href='https://lichess.org/@/""" + name + """'>""" + name + """</a></h2>
 Активен: """ + str(info["lastActive"])[:-15]  + """
 </td>
-<td> <img src="https://www.freeiconspng.com/thumbs/christmas-hat-png/christmas-hat-png-15.png" height="75">
+<td> <img src="https://spb.fit-baza.com/image/cache/catalog/product/83734/miach-futbolnyi-adidas-wc26-trionda-league-box-jd8045-r-4-photo-6-762x508.jpeg" height="75">
 </td>
 </tr>
 </table>
@@ -981,7 +979,7 @@ def get_page_user(is_mobile = False):
               , styles = background_style, sizing_mode = "scale_width")
 
     
-    header_row = pn.Row(getLogoPanel(img_xmas_long), getLogoPanel(img_xmas_long), getTextPanel(''), select_type_widget, select_time_widget)
+    header_row = pn.Row(getLogoPanel(img_2026_long), getLogoPanel(img_2026_long), getTextPanel(''), select_type_widget, select_time_widget)
     if not is_mobile:
       header_row[0].sizing_mode = 'stretch_width' #stretching first element (empty spacer) to move everything to right
 
